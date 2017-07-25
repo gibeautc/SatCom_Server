@@ -1,0 +1,13 @@
+CPU temp shutdown point is 85C  Not sure if it is different based on model ( i think they were using the 3)
+Probably will want to do self regulation at 70C?  
+At Idle in office, the zero seems to settle out at 35C (0.4 load ave)
+The pi3 sits at 45C
+
+screen commands
+	vcgencmd display_power 1 on
+	vcgencmd display_power 0 off
+
+SatCom Notes
+	serial should be 19200
+
+
