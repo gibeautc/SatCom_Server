@@ -55,7 +55,7 @@ def index():
 				send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
 		except:
 			try:
-				o=open('/home/pi/SatComBox/WS_Out','w')
+				o=open('/home/pi/SatCom_Server/WS_out','w')
 				data=request.json
 				name=data['name']
 				message=data['text']
