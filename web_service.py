@@ -68,7 +68,7 @@ def index():
 						#send message to sat
 						IMEI='300234064380130'
 						NAME="gibeautc@oregonstate.edu"
-						PASSWORD='myvice12'
+						PASSWORD='aq12ws'
 						DATA=message[1:]
 						params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
 						f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
