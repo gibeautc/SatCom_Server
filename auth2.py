@@ -2,10 +2,15 @@
 
 import os
 import errno
+import MySQLdb
 
+db=MySQLdb.connect(host="localhost",user="root",passwd="aq12ws",db="main")
+curs=db.cursor()
+
+#need database calls to pull existing blocked list
 blocked=[]
 ip_list={}
-user_name={}
+
 FIFO='authpipe'
 
 def logout(msg):
@@ -20,23 +25,38 @@ except OSError as oe:
 	if oe.errno != errno.EEXIST:
 		raise
 
-#os.system("fail -f -n0 /var/log/auth.log > /home/pi/SatCom_server/authpipe &")
+def check(ip,name):
+	print("Checking IP: "+ip+" with username: "+name)
+	if ip not in ip_list:
+		ip_list[ip]=1
+	else:
+		ip_list[ip]=ip_list[ip]+1
+	if ip not in blocked:
+		if ip_list[ip]>10:
+			#block them
+			logout("Blocking: "+str(ip))
+			os.system("sudo iptables -A INPUT -s "+ip+" -j DROP")
+			blocked.append(ip)
+	curs.execute("""INSERT INTO unauth(ddate,ttime,ip_address,username) VALUES(CURDATE(),CURTIME(),%s,%s)""",(ip,name))
+	db.commit()
+
 with open(FIFO,"r") as pipe:
-	#os.system("tail -n0 /var/log/auth.log > /home/pi/SatCom_Server/authpipe")
 	while True:
 		data=pipe.readline()
 		if data !="":
-			if "Failed password" in data:
+
+			if "Failed password for invalid" in data:
 				elements=data.split(" ")
-				if elements[10] not in ip_list:
-					ip_list[elements[10]]=1
-				else:
-					ip_list[elements[10]]=ip_list[elements[10]]+1
-				if elements[10] not in blocked:
-					if ip_list[elements[10]]>10:
-						#block them
-						logout("Blocking: "+elements[10])
-						os.system("sudo iptables -A INPUT -s "+elements[10]+" -j DROP")
-						blocked.append(elements[10])	
-				logout(elements)
+				ip=elements[12]
+				name=elements[10]
+				check(ip,name)
+					
+			elif "Failed password" in data:
+				elements=data.split(" ")
+				#get ip and name
+				ip=elements[10]
+				name=elements[8]
+				check(ip,name)
+		
 	time.sleep(1)
+db.close()
