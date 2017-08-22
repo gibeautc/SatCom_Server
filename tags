@@ -1,0 +1,124 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BLUE	read_fore.py	/^	BLUE='\\033[0;37;44m'$/;"	v	class:bcolors
+BLUE	read_traf.py	/^	BLUE='\\033[0;37;44m'$/;"	v	class:bcolors
+ENDC	read_fore.py	/^	ENDC='\\033[0m'$/;"	v	class:bcolors
+ENDC	read_traf.py	/^	ENDC='\\033[0m'$/;"	v	class:bcolors
+FIFO	auth2.py	/^FIFO='authpipe'$/;"	v
+Get_alert	weather.py	/^def Get_alert(city_name):$/;"	f
+Get_current	water.py	/^def Get_current():$/;"	f
+Get_current	weather.py	/^def Get_current(city_name):$/;"	f
+Get_forecast	weather.py	/^def Get_forecast(city_name):$/;"	f
+Get_weather	weather_mobile.py	/^def Get_weather(location):$/;"	f
+Print	read_fore.py	/^	def Print(self):$/;"	m	class:ten_day
+__init__	read_fore.py	/^	def __init__(self,c):$/;"	m	class:ten_day
+a	issues.py	/^	a=raw_input("Of what type(SP,CP,SB,CP,H,W):")$/;"	v
+acc	issues.py	/^	acc=raw_input("Is this correct?")$/;"	v
+add_day	read_fore.py	/^	def add_day(self,h,l,w,r,s,we):$/;"	m	class:ten_day
+add_to_list	back.py	/^def add_to_list(ip,h):$/;"	f
+albany	read_fore.py	/^albany=process_forcast('albany')$/;"	v
+alert_scrub	read_fore.py	/^def alert_scrub():$/;"	f
+app	web_service.py	/^app=Flask(__name__)$/;"	v
+bcolors	read_fore.py	/^class bcolors:$/;"	c
+bcolors	read_traf.py	/^class bcolors:$/;"	c
+bit_map	weather_mobile.py	/^def bit_map(x,bits,in_min,in_max):$/;"	f
+blocked	auth2.py	/^blocked=[]$/;"	v
+c	back.py	/^	c=check_in_list(line[2])	$/;"	v
+c_index	alert.py	/^c_index=0$/;"	v
+c_index	cur.py	/^c_index=0$/;"	v
+change_key	weather.py	/^def change_key():$/;"	f
+change_key	weather_mobile.py	/^def change_key():$/;"	f
+check	auth2.py	/^def check(ip,name):$/;"	f
+check_in_db	back.py	/^def check_in_db(ip):$/;"	f
+check_in_list	back.py	/^def check_in_list(ip):$/;"	f
+check_sky	sky.py	/^def check_sky(mon,day):$/;"	f
+city	alert.py	/^city=['albany','salem','portland','newport','eugene']$/;"	v
+city	cur.py	/^city=['albany','salem','portland','newport','eugene']$/;"	v
+citys	weather.py	/^citys=['albany','salem','portland','newport','eugene']$/;"	v
+cnt	back.py	/^		cnt=check_in_db(line[2])$/;"	v
+cnt	mon.py	/^		cnt=cnt+1$/;"	v
+cnt	mon.py	/^cnt=0$/;"	v
+count	read_traf.py	/^	count=0	$/;"	v
+count	read_traf.py	/^	count=0$/;"	v
+country	back.py	/^def country(tag):$/;"	f
+curs	alert.py	/^curs=db.cursor()$/;"	v
+curs	auth2.py	/^curs=db.cursor()$/;"	v
+curs	back.py	/^curs=db.cursor()$/;"	v
+curs	cur.py	/^curs=db.cursor()$/;"	v
+curs	issues.py	/^curs=db.cursor()$/;"	v
+curs	mon.py	/^curs=db.cursor()$/;"	v
+curs	read_fore.py	/^curs=db.cursor()$/;"	v
+curs	read_traf.py	/^curs=db.cursor()$/;"	v
+curs	sky.py	/^curs=db.cursor()$/;"	v
+curs	water.py	/^curs=db.cursor()$/;"	v
+curs	weather.py	/^curs=db.cursor()$/;"	v
+curs	weather_mobile.py	/^curs=db.cursor()$/;"	v
+data	mon.py	/^	data=curs.fetchall()$/;"	v
+data	read_traf.py	/^	data=curs.fetchall()$/;"	v
+db	alert.py	/^db=MySQLdb.connect('localhost','auto','myvice12','main')$/;"	v
+db	auth2.py	/^db=MySQLdb.connect(host="localhost",user="root",passwd="aq12ws",db="main")$/;"	v
+db	back.py	/^db=MySQLdb.connect(host="localhost",user="root",passwd="aq12ws",db="main")$/;"	v
+db	cur.py	/^db=MySQLdb.connect('localhost','auto','myvice12','main')$/;"	v
+db	issues.py	/^db=MySQLdb.connect("localhost","root","myvice12","main")$/;"	v
+db	mon.py	/^db=MySQLdb.connect(host="localhost",user="root",passwd="aq12ws",db="main")$/;"	v
+db	read_fore.py	/^db=MySQLdb.connect("localhost","auto","myvice12","main")$/;"	v
+db	read_traf.py	/^db=MySQLdb.connect("localhost","auto","myvice12","main")$/;"	v
+db	sky.py	/^db=MySQLdb.connect('localhost','auto','myvice12','main')$/;"	v
+db	water.py	/^db=MySQLdb.connect('localhost','auto','myvice12','main')$/;"	v
+db	weather.py	/^db=MySQLdb.connect('localhost','root','aq12ws','main')$/;"	v
+db	weather_mobile.py	/^db=MySQLdb.connect('localhost','auto','myvice12','main')$/;"	v
+db_add	issues.py	/^def db_add(title,notes,typ,location,owner):$/;"	f
+detail	issues.py	/^def detail(i):$/;"	f
+down	read_fore.py	/^down=u"\\u25BC"$/;"	v
+down	read_traf.py	/^down=u"\\u25BC"$/;"	v
+i	back.py	/^i=curs.fetchall()$/;"	v
+i	mon.py	/^i=curs.fetchall()$/;"	v
+i	mon.py	/^i=curs.fetchone()$/;"	v
+index	web_service.py	/^def index():$/;"	f
+ip_list	auth2.py	/^ip_list={}$/;"	v
+key	weather.py	/^key=["35859b32434c5985","803ee257021d3c0e"]$/;"	v
+key	weather_mobile.py	/^key=["35859b32434c5985","803ee257021d3c0e"]$/;"	v
+kindex	weather.py	/^kindex=0$/;"	v
+kindex	weather_mobile.py	/^kindex=0$/;"	v
+loc	issues.py	/^	loc=raw_input("Location(file name or peice of hardware effected):")$/;"	v
+logout	auth2.py	/^def logout(msg):$/;"	f
+n	issues.py	/^	n=raw_input("Notes:")$/;"	v
+o	issues.py	/^	o=raw_input("Your Name:")$/;"	v
+open_issues	issues.py	/^def open_issues(t):$/;"	f
+portland	read_fore.py	/^portland=process_forcast('portland')$/;"	v
+process_forcast	read_fore.py	/^def process_forcast(name):$/;"	f
+q	back.py	/^q="SELECT * from unauth"$/;"	v
+q	mon.py	/^	q='SELECT * FROM unauth WHERE id > %s'$/;"	v
+q	mon.py	/^q="SELECT id from unauth order by id desc limit 1"$/;"	v
+rate	weather.py	/^rate=21$/;"	v
+salem	read_fore.py	/^salem=process_forcast('salem')$/;"	v
+sant	water.py	/^sant=[]$/;"	v
+send_gm	web_service.py	/^def send_gm(message):$/;"	f
+show_all	issues.py	/^def show_all():$/;"	f
+start	mon.py	/^		start=line[4]$/;"	v
+start	mon.py	/^	start=0$/;"	v
+start	mon.py	/^start=0$/;"	v
+start	mon.py	/^start=int(i[0])$/;"	v
+start	mon.py	/^start=start-10$/;"	v
+sunend	sky.py	/^sunend=15$/;"	v
+sunstart	sky.py	/^sunstart=9$/;"	v
+t	issues.py	/^	t=raw_input("Title of Issue:")$/;"	v
+ten_day	read_fore.py	/^class ten_day(object):$/;"	c
+total	read_traf.py	/^	total=z1s_ave+z2s_ave+z3s_ave+z4s_ave$/;"	v
+trend	read_fore.py	/^	def trend(self,lst):$/;"	m	class:ten_day
+ttype	issues.py	/^	ttype=raw_input("\\n\\nType?\\nSP-Server side python\\nCP-Client Side python\\nSB-Server Side DB\\nCB-Client side DB\\nW-web_interface\\nH-Hardware:")$/;"	v
+up	read_fore.py	/^up=u"\\u25B2"$/;"	v
+up	read_traf.py	/^up=u"\\u25B2"$/;"	v
+update	back.py	/^def update(stat):$/;"	f
+z1s	read_traf.py	/^	z1s=0$/;"	v
+z1s_ave	read_traf.py	/^	z1s_ave=float(z1s\/count)$/;"	v
+z2s	read_traf.py	/^	z2s=0$/;"	v
+z2s_ave	read_traf.py	/^	z2s_ave=float(z2s\/count)$/;"	v
+z3s	read_traf.py	/^	z3s=0$/;"	v
+z3s_ave	read_traf.py	/^	z3s_ave=float(z3s\/count)$/;"	v
+z4s	read_traf.py	/^	z4s=0$/;"	v
+z4s_ave	read_traf.py	/^	z4s_ave=float(z4s\/count)$/;"	v

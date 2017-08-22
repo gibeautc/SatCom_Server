@@ -6,7 +6,7 @@ import urllib
 import pprint
 import MySQLdb
 import sys
-db=MySQLdb.connect('localhost','auto','myvice12','main')
+db=MySQLdb.connect('localhost','root','aq12ws','main')
 curs=db.cursor()
 key=["35859b32434c5985","803ee257021d3c0e"]
 kindex=0
@@ -28,6 +28,7 @@ def Get_current(city_name):
 	try:
 		response=urllib.urlopen(url)
 		data=json.loads(response.read())
+		
 	except:
 		print("Error Getting Data")
 		print(sys.exc_info())
@@ -137,7 +138,8 @@ def Get_forecast(city_name):
 		db_date=str(date_year)+"-"+str(date_month)+"-"+str(date_day)
 		db_out=[db_date,str(high),str(low),str(wind_mph),wind_dir,str(wind_max),wind_mdir,str(qpf_day),str(qpf_night),str(qpf_total),str(snow_day),str(snow_night),str(snow_total),status,city_name]
 		try:
-			curs.execute('insert into weather_forecast values(current_date(),now(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0)',db_out)
+			q='insert into weather_day(rec_date,rec_time,for_date,high,low,wind_mph,wind_dir,wind_max,wind_mdir,prec_day,prec_night,prec_total,snow_day,snow_night,snow_total,cond,loc_name) values(curdate(),curtime(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+			curs.execute(q,db_out)
 			db.commit()
 		except:
 			print("Error: Rolling Back")
@@ -147,18 +149,18 @@ def Get_forecast(city_name):
 
 
 while True:
-	time.sleep(120)
-	if rate>20:
-		print("Starting Loop\n\n")
-		rate=0
-		for city in citys:
-			Get_forecast(city)
-			Get_alert(city)
-			time.sleep(120)
+	
+	#if rate>20:
+	#	print("Starting Loop\n\n")
+	#	rate=0
 	for city in citys:
-		Get_current(city)
-		time.sleep(120)
-	time.sleep(120)
-	rate+=1
-		
+		Get_forecast(city)
+			#Get_alert(city)
+			#time.sleep(120)
+	#for city in citys:
+		#Get_current(city)
+		#time.sleep(120)
+	#time.sleep(120)
+	#rate+=1
+		time.sleep(60*60)	
 	
