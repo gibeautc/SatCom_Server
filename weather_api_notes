@@ -1,0 +1,11 @@
+http://api.wunderground.com/api/KEY/forecast10day/q/OR/CITY.json
+
+
+http://api.wunderground.com/api/35859b32434c5985/forecast10day/q/OR/albany.json
+
+
+http://api.wunderground.com/api/35859b32434c5985/hourly10day/q/OR/albany.json
+
+
+
+
