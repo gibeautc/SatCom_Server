@@ -2,7 +2,7 @@
 import time
 import sys
 import json
-
+import MySQLdb 
 TEST=False
 
 
@@ -13,9 +13,9 @@ def parse_forcast(data):
 	hourly=data['hourly_forecast']
 	for e in hourly:
 		day=e['FCTTIME']['mday']
-		month=e['FCTIME']['mon']
-		year=e['FCTIME']['year']
-		hour=e['FCTIME']['hour']
+		month=e['FCTTIME']['mon']
+		year=e['FCTTIME']['year']
+		hour=e['FCTTIME']['hour']
 		temp=e['temp']['english']
 		sky=e['sky']
 		condition=e['condition']
@@ -28,7 +28,7 @@ def parse_forcast(data):
 		hum=e['humidity']
 	if TEST:
 		print("values")
-	else:
+
 		print("add to db")
 	
 
