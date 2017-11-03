@@ -2,6 +2,7 @@
 import time
 import sys
 import json
+<<<<<<< HEAD
 import logging
 import MySQLdb
 import urllib
@@ -13,6 +14,7 @@ kindex=0
 
 
 
+import MySQLdb 
 TEST=False
 
 import logging as log
