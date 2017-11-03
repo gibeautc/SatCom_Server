@@ -8,4 +8,15 @@ http://api.wunderground.com/api/35859b32434c5985/hourly10day/q/OR/albany.json
 
 
 
+create populate current conditions table
+	populate high/low/rain/sky for each day
+	sanitize current conditions table from a week back maybe
+
+delete any forcast rows from 1 day earlier and before
+
+
+
+create populate alert table
+	delete once no longer active
+
 
