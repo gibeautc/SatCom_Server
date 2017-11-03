@@ -2,7 +2,6 @@
 import time
 import sys
 import json
-<<<<<<< HEAD
 import logging
 import MySQLdb
 import urllib
@@ -42,21 +41,18 @@ def parse_forecast(data,location):
 		qpf=float(qpf)
 		snow=float(snow)
 		pres=float(pres)
-		if TEST:
-			log.debug("Test")
-		else:
-			log.info("Adding record for location: "+location)
-			db_date=str(year)+'-'+str(month)+'-'+str(day)
-			db_out=[str(db_date),str(location),str(hour),str(temp),str(sky),str(condition),str(wspd),str(wdir),str(wc),str(qpf),str(snow),str(pres),str(hum)]
-			q='insert into forecast(rec_date,rec_time,for_date,location,hour,temp,sky,cond,wspd,wdir,wc,qpf,snow,pres,hum) values(curdate(),curtime(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
-			try:
-				curs.execute(q,db_out)
-				db.commit()
-				log.debug("entry added for location: "+location)
-			except:
-				db.rollback()
-				log.error("Error Adding DB entry")
-				log.error(sys.exc_info())
+		log.info("Adding record for location: "+location)
+		db_date=str(year)+'-'+str(month)+'-'+str(day)
+		db_out=[str(db_date),str(location),str(hour),str(temp),str(sky),str(condition),str(wspd),str(wdir),str(wc),str(qpf),str(snow),str(pres),str(hum)]
+		q='insert into forecast(rec_date,rec_time,for_date,location,hour,temp,sky,cond,wspd,wdir,wc,qpf,snow,pres,hum) values(curdate(),curtime(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+		try:
+			curs.execute(q,db_out)
+			db.commit()
+			#log.debug("entry added for location: "+location)
+		except:
+			db.rollback()
+			log.error("Error Adding DB entry")
+			log.error(sys.exc_info())
 def get_forecast(location):
 	global key, kindex
 	log.info("Getting forcast for: "+location)
