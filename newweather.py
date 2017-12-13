@@ -14,16 +14,32 @@ import urllib2
 TEST=False
 
 #Todo:
-#add current weather functionality
-#add weather alert functionality
 #add database backup functionality
-#add river sites to weather locations
 #add state to location names so that we can do stuff outside of oregon
 #convert weather to urllib2 since I think its better?
 #remove text name from river data, can look it up via river_sites and will save a ton of space in the long run
 
 
+
 #add key rotate functionality
+
+alert_types=['HUR','TOR','TOW','WRN','SEW','WIN',
+			'FLO','WAT','WND','SVR','HEA','HEA','FOG',
+			'FOG','SPE','FIR','VOL','HWW','REC','REP','PUB']
+
+alert_strings=['Hurricane Local Statement','Tornado Warning',
+				'Tornado Watch','Severe Thunderstorm Warning',
+				'Severe Thunderstorm Watch','Winter Weather Advisory',
+				'Flood Warning','Flood Watch / Statement',
+				'High Wind Advisory','Severe Weather Statement',
+				'Heat Advisory','Dense Fog Advisory',
+				'Special Weather Statement','Fire Weather Advisory',
+				'Volcanic Activity Statement','Hurricane Wind Warning',
+				'Record Set','Public Reports',
+				'Public Information Statement']
+
+
+
 
 
 
@@ -49,12 +65,37 @@ start=True
 md=0
 
 
-
-	
-
-
 log.basicConfig(filename='/home/pi/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
+def send_gm(message):
+	bot='0111eaa305c26110dd21040a0a'	#real
+	#bot='6156eb1065fb54295ea8ae138d'  #test
+	params=urllib.urlencode({'bot_id':bot,'text':message})
+	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
+	log.debug(f.read())
+
+
+def check_send_alert():
+	db_out="select description,issued,expires from alert where location='albany' and notify<1"
+	curs.execute(db_out,)
+	data=curs.fetchall()
+	new=0
+	for d in data:
+		new=1
+		msg="Alert: "+str(d[0])+" ISSUED:"+str(d[1])+" EXPIRES:"+str(d[2])
+		send_gm(msg)
+		db_out="update alert set notify=1 where issued='"+str(d[1])+"' and location='albany' and expires='"+str(d[2])+"'"
+		try:
+			curs.execute(db_out,)
+			db.commit()
+			
+		except:
+			db.rollback()
+			log.error("Error Updating Alert entry")
+			log.error(sys.exc_info())
+	if new==1:
+		send_gm("Get more information at")
+		send_gm("http://dustoff.servebeer.com")
 
 def is_LatLon(location):
 	print("checking if LatLon")
@@ -194,6 +235,34 @@ def parse_forecast(data,location):
 			db.rollback()
 			log.error("Error Adding DB entry(Forecast)")
 			log.error(sys.exc_info())
+	
+def parse_alert(data,location):
+	log.info("Parsing Alert for "+location)
+	alerts=data['alerts']
+	for a in alerts:
+		try:
+			tp=a['type']
+			issue=int(a['date_epoch'])
+			expire=int(a['expires_epoch'])
+			message=a['message']
+			desc=a['description']
+			iT=time.localtime(issue)
+			eT=time.localtime(expire)
+			issueStr=str(iT.tm_year)+"-"+str(iT.tm_mon)+"-"+str(iT.tm_mday)+" "+str(iT.tm_hour)+":"+str(iT.tm_min)+":"+str(iT.tm_sec)
+			expireStr=str(eT.tm_year)+"-"+str(eT.tm_mon)+"-"+str(eT.tm_mday)+" "+str(eT.tm_hour)+":"+str(eT.tm_min)+":"+str(eT.tm_sec)
+			db_out=[location,str(tp),str(desc),str(message),issueStr,expireStr]
+			q='insert into alert(location,type,description,message,issued,expires,notify) values(%s,%s,%s,%s,%s,%s,0)'
+		
+			curs.execute(q,db_out)
+			db.commit()
+			log.debug("Alert entry added for location: "+location)
+		except:
+			db.rollback()
+			log.error("Error Adding DB entry(Forecast)")
+			log.error(sys.exc_info())	
+	
+	
+	
 		
 def set_last(location,what):
 	q="UPDATE last_checked_weather set "+what+" = Now() where location=%s"
@@ -251,7 +320,17 @@ def get_current(location):
 
 
 def get_alert(location):
-	log.error("FIXME: write funtion for get_alert")
+	global weather_key, kindex
+	log.info("Getting Alert conditions for: "+location)
+	url='http://api.wunderground.com/api/'+weather_key[kindex]+'/alerts/q/OR/'+location+'.json'
+	try:
+		response=urllib.urlopen(url)
+		data=json.loads(response.read())
+	except:
+		log.error("Error Getting Alerts from web")
+		log.error(sys.exc_info())
+		return
+	parse_alert(data,location)
 	set_last(location,"alert")
 
 
@@ -360,6 +439,7 @@ def main():
 		need_update()
 		check_config()
 		check_river_update()
+		check_send_alert()
 		time.sleep(10)
 		if startLogs>0:
 			startLogs=startLogs-1

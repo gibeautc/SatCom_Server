@@ -82,14 +82,6 @@ def get_signup_for_event(event):
 	 
 
 def send_gm(message,bot):
-	#at="68ea42109ec80134adf205b7f1deccdf"
-	#test_ID='27306241'
-	#url_send='https://api.groupme.com/v3/groups/'+test_ID+'/messages?token='+at
-	#message='Fuck+off+jason'
-	#url='https://api.groupme.com/v3/bots/post?bot_id='+bot+'&text='+message
-	#logging.debug(url)
-	#r=requests.post(url)
-	#logging.debug(r)
 	params=urllib.urlencode({'bot_id':bot,'text':message})
 	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
 	logging.debug(f.read())
@@ -288,3 +280,4 @@ def index():
 		return "done",200
 if __name__ == '__main__':
 	app.run(debug=False,use_reloader=True, host='0.0.0.0')
+	
