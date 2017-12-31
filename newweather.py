@@ -68,8 +68,8 @@ md=0
 log.basicConfig(filename='/home/pi/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def send_gm(message):
-	bot='0111eaa305c26110dd21040a0a'	#real
-	#bot='6156eb1065fb54295ea8ae138d'  #test
+	#bot='0111eaa305c26110dd21040a0a'	#real
+	bot='6156eb1065fb54295ea8ae138d'  #test
 	params=urllib.urlencode({'bot_id':bot,'text':message})
 	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
 	log.debug(f.read())
@@ -237,6 +237,7 @@ def parse_forecast(data,location):
 			log.error(sys.exc_info())
 	
 def parse_alert(data,location):
+	
 	log.info("Parsing Alert for "+location)
 	alerts=data['alerts']
 	for a in alerts:
@@ -251,7 +252,7 @@ def parse_alert(data,location):
 			issueStr=str(iT.tm_year)+"-"+str(iT.tm_mon)+"-"+str(iT.tm_mday)+" "+str(iT.tm_hour)+":"+str(iT.tm_min)+":"+str(iT.tm_sec)
 			expireStr=str(eT.tm_year)+"-"+str(eT.tm_mon)+"-"+str(eT.tm_mday)+" "+str(eT.tm_hour)+":"+str(eT.tm_min)+":"+str(eT.tm_sec)
 			db_out=[location,str(tp),str(desc),str(message),issueStr,expireStr]
-			q='insert into alert(location,type,description,message,issued,expires,notify) values(%s,%s,%s,%s,%s,%s,0)'
+			q='insert into alert(location,type,description,message,issued,expires,notify,active) values(%s,%s,%s,%s,%s,%s,0,1) on duplicate key update active=1'
 		
 			curs.execute(q,db_out)
 			db.commit()
@@ -320,6 +321,19 @@ def get_current(location):
 
 
 def get_alert(location):
+	#set all alerts for this location to inactive, then if they are still in data they will be updated
+	db_out="update alert set active=0 where location='"+location+"'"
+	try:
+		curs.execute(db_out,)
+		db.commit()
+			
+	except:
+		db.rollback()
+		log.error("Error Setting all Alerts to inactive")
+		log.error(sys.exc_info())
+	
+	
+	
 	global weather_key, kindex
 	log.info("Getting Alert conditions for: "+location)
 	url='http://api.wunderground.com/api/'+weather_key[kindex]+'/alerts/q/OR/'+location+'.json'
