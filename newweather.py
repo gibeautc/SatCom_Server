@@ -13,11 +13,11 @@ import urllib2
 
 TEST=False
 
-#Todo:
+#Todo
 #add database backup functionality
 #add state to location names so that we can do stuff outside of oregon
 #convert weather to urllib2 since I think its better?
-#remove text name from river data, can look it up via river_sites and will save a ton of space in the long run
+#remove text name from river data, look it up via river_sites and will save a ton of space in the long run
 
 
 
@@ -68,8 +68,8 @@ md=0
 log.basicConfig(filename='/home/pi/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def send_gm(message):
-	#bot='0111eaa305c26110dd21040a0a'	#real
-	bot='6156eb1065fb54295ea8ae138d'  #test
+	bot='0111eaa305c26110dd21040a0a'	#real
+	#bot='6156eb1065fb54295ea8ae138d'  #test
 	params=urllib.urlencode({'bot_id':bot,'text':message})
 	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
 	log.debug(f.read())

@@ -36,7 +36,7 @@
 	} else{
 		echo "No Results";
 	}
-	$sql="select description,message from alert where expires>NOW() and location='albany' and active=0";
+	$sql="select description,message from alert where expires>NOW() and location='albany' and active=1";
 	$alerts=$conn->query($sql);
 	if($alerts->num_rows >0){
 		while($row=$alerts->fetch_assoc()){
