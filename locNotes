@@ -1,0 +1,10 @@
+Create Client Side key pair
+Use this pub key on server when sending stuff to clients
+
+create table for clients
+clientID
+clientIP
+keyType
+pubKey
+Notes
+
