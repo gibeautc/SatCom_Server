@@ -49,7 +49,7 @@ curs=db.cursor()
 
 #keys and index for weather api
 weather_key=["35859b32434c5985","803ee257021d3c0e"]
-kindex=0
+kindex=1
 
 #update times (min)
 UT_FORECAST=2
@@ -66,6 +66,27 @@ md=0
 
 
 log.basicConfig(filename='/home/pi/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
+def webResponse(url):
+	try:
+		response=urllib2.urlopen(url)
+	except:
+		log.error("Response Fail")
+		log.error(url)
+		return None
+	try:
+		html=response.read()
+	except:
+		log.error("Failed to read response")
+		log.error(url)
+		return None
+	try:
+		jsonData=json.loads(html)
+	except:
+		log.error("Failed to get JSON from response")
+		log.error(url)
+		return None
+	return jsonData
 
 def send_gm(message):
 	bot='0111eaa305c26110dd21040a0a'	#real
@@ -150,10 +171,9 @@ def parse_river_file(j):
 def get_river_data(ID):
 	log.info("Getting Current Stats for station: "+str(ID))
 	try:
-		response = urllib2.urlopen('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+str(ID)+'&parameterCd=00060,00065&siteStatus=all')
-		html = response.read()
-		out=json.loads(html)
-		return out
+		r=webResponse('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+str(ID)+'&parameterCd=00060,00065&siteStatus=all')
+		if r is None:
+			return
 	except:
 		log.error("Failed to get River data:"+str(ID))
 		log.error(sys.exc_info())
@@ -178,19 +198,24 @@ def store_river(ID,location,height,flow):
 
 def parse_current(data,location):
 	#data=json.loads(data)
-	log.info("Adding current conditions for "+location)
-	cur=data['current_observation']
-	weather=cur['weather']
-	temp=cur['temp_f']
-	wind_dir=cur['wind_degrees']
-	wind_dir=int(float(wind_dir))
-	wind=cur['wind_mph']
-	wind_gust=cur['wind_gust_mph']
-	pressure=cur['pressure_in']
-	pressure_trend=cur['pressure_trend']
-	precip_1hr=cur['precip_1hr_in']
-	precip_today=cur['precip_today_in']
-	
+	try:
+	    log.info("Adding current conditions for "+location)
+	    cur=data['current_observation']
+	    weather=cur['weather']
+	    temp=cur['temp_f']
+	    wind_dir=cur['wind_degrees']
+	    wind_dir=int(float(wind_dir))
+	    wind=cur['wind_mph']
+	    wind_gust=cur['wind_gust_mph']
+	    pressure=cur['pressure_in']
+	    pressure_trend=cur['pressure_trend']
+	    precip_1hr=cur['precip_1hr_in']
+	    precip_today=cur['precip_today_in']
+	except:
+		log.error("Error Parsing Current Conditions for: "+location)
+		log.error(data)
+        log.error(sys.exc_info())
+        return
 	db_out=[str(location),str(weather),str(temp),str(wind_dir),str(wind),str(wind_gust),str(pressure),str(pressure_trend),str(precip_1hr),str(precip_today)]
 	q='insert into conditions(rec_time,location,weather,temp,wind_dir,wind,wind_gust,pressure,pressure_trend,precip_1hr,precip_today) values(Now(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
 	try:
@@ -293,10 +318,12 @@ def get_forecast(location):
 	log.info("Getting forcast for: "+location)
 	url='http://api.wunderground.com/api/'+weather_key[kindex]+'/hourly10day/q/OR/'+location+'.json'
 	try:
-		response=urllib.urlopen(url)
-		data=json.loads(response.read())
+		data=webResponse(url)
+		if data is None:
+			return
 	except:
 		log.error("Error Getting Forecast from web")
+                log.error(response.read())
 		log.error(sys.exc_info())
 		return
 	parse_forecast(data,location)
@@ -309,10 +336,12 @@ def get_current(location):
 	log.info("Getting current conditions for: "+location)
 	url='http://api.wunderground.com/api/'+weather_key[kindex]+'/conditions/q/OR/'+location+'.json'
 	try:
-		response=urllib.urlopen(url)
-		data=json.loads(response.read())
+		data=webResponse(url)
+		if data is None:
+			return
 	except:
 		log.error("Error Getting Conditions from web")
+                log.error(response.read())
 		log.error(sys.exc_info())
 		return
 	parse_current(data,location)
@@ -338,10 +367,12 @@ def get_alert(location):
 	log.info("Getting Alert conditions for: "+location)
 	url='http://api.wunderground.com/api/'+weather_key[kindex]+'/alerts/q/OR/'+location+'.json'
 	try:
-		response=urllib.urlopen(url)
-		data=json.loads(response.read())
+		data=webResponse(url)
+		if data is None:
+			return
 	except:
 		log.error("Error Getting Alerts from web")
+                log.error(response.read())
 		log.error(sys.exc_info())
 		return
 	parse_alert(data,location)
