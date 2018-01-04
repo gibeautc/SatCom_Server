@@ -49,7 +49,7 @@ curs=db.cursor()
 
 #keys and index for weather api
 weather_key=["35859b32434c5985","803ee257021d3c0e"]
-kindex=1
+kindex=0
 
 #update times (min)
 UT_FORECAST=2
@@ -68,6 +68,7 @@ md=0
 log.basicConfig(filename='/home/pi/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def webResponse(url):
+	st=time.time()
 	try:
 		response=urllib2.urlopen(url)
 	except:
@@ -86,6 +87,11 @@ def webResponse(url):
 		log.error("Failed to get JSON from response")
 		log.error(url)
 		return None
+	et=time.time()
+	if "water" in url:
+		log.debug("River Response time: "+str(et-st))
+	if "ground" in url:
+		log.debug("Weather Response time: "+str(et-st))
 	return jsonData
 
 def send_gm(message):
@@ -169,11 +175,13 @@ def parse_river_file(j):
 	return [height,flow]
 
 def get_river_data(ID):
-	log.info("Getting Current Stats for station: "+str(ID))
+        log.info("Getting Current Stats for station: "+str(ID))
 	try:
-		r=webResponse('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+str(ID)+'&parameterCd=00060,00065&siteStatus=all')
+	        r=webResponse('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+str(ID)+'&parameterCd=00060,00065&siteStatus=all')
 		if r is None:
+                        log.warning("river web response=None")
 			return
+                return r
 	except:
 		log.error("Failed to get River data:"+str(ID))
 		log.error(sys.exc_info())
@@ -199,32 +207,35 @@ def store_river(ID,location,height,flow):
 def parse_current(data,location):
 	#data=json.loads(data)
 	try:
-	    log.info("Adding current conditions for "+location)
-	    cur=data['current_observation']
-	    weather=cur['weather']
-	    temp=cur['temp_f']
-	    wind_dir=cur['wind_degrees']
-	    wind_dir=int(float(wind_dir))
-	    wind=cur['wind_mph']
-	    wind_gust=cur['wind_gust_mph']
-	    pressure=cur['pressure_in']
-	    pressure_trend=cur['pressure_trend']
-	    precip_1hr=cur['precip_1hr_in']
-	    precip_today=cur['precip_today_in']
+		log.debug(data)
+		log.info("Adding current conditions for "+location)
+		cur=data['current_observation']
+		weather=cur['weather']
+		temp=cur['temp_f']
+		wind_dir=cur['wind_degrees']
+		wind_dir=int(float(wind_dir))
+		wind=cur['wind_mph']
+		wind_gust=cur['wind_gust_mph']
+		pressure=cur['pressure_in']
+		pressure_trend=cur['pressure_trend']
+		precip_1hr=cur['precip_1hr_in']
+		precip_today=cur['precip_today_in']
 	except:
 		log.error("Error Parsing Current Conditions for: "+location)
+		log.error("Here is the data")
 		log.error(data)
-        log.error(sys.exc_info())
-        return
+		log.error("Here is the error")
+		log.error(sys.exc_info())
+		return	
 	db_out=[str(location),str(weather),str(temp),str(wind_dir),str(wind),str(wind_gust),str(pressure),str(pressure_trend),str(precip_1hr),str(precip_today)]
 	q='insert into conditions(rec_time,location,weather,temp,wind_dir,wind,wind_gust,pressure,pressure_trend,precip_1hr,precip_today) values(Now(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
 	try:
+		log.info("commiting current")
 		curs.execute(q,db_out)
 		db.commit()
-		#log.debug("entry added for location: "+location)
 	except:
-		db.rollback()
 		log.error("Error Adding DB entry(Conditions)")
+		db.rollback()
 		log.error(sys.exc_info())
 			
 def parse_forecast(data,location):
@@ -427,11 +438,15 @@ def check_river_update():
 			log.info("Updating River Location: "+str(location))
 			raw=get_river_data(site)
 			if raw==None:
+                                log.warning("Returning because raw is None")
 				return
 			data=parse_river_file(raw)
 			if data is not None:
+                                log.info("Attemping to store..")
 				store_river(site,location,data[0],data[1])
 				set_river_last(site)
+                        else:
+                            log.warning("Data is none somehow....")
 			
 def check_config():
 	

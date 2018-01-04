@@ -51,6 +51,21 @@ def processGet(data,ip):
     logging.debug("GET from :"+str(ip)+" with data "+str(data))
     return "yep"
 
+
+def isKnown(ID,IP):
+    pass
+    #check database for ID,IP combo, if found return true, else return false
+    #need to write this
+    return True
+    #hard coded True will let the whole auth process pass for now
+
+def auth():
+    pass
+    #need to write this
+    #check if data contains the passphrase
+    #if not, send specific error code, which will make client send passphrase
+
+
 app=Flask(__name__)
 #@app.route('/gmbot1',methods=['GET','POST'])
 #def gm1():
@@ -61,22 +76,28 @@ app=Flask(__name__)
 
 @app.route('/',methods=['GET','POST'])
 def index():
+    try:
+        data=decText(request.data)
+        data=json.loads(data)
+    except:
+        log.error("Error Decoding Request Data")
+        return "Enc Error",401
+    try:
+        reqId=data['id']
+    except:
+        log.error("Request does not contain id field")
+    if not isKnown(reqId,request.remote_addr):
+        auth()
     if request.method=='POST':
         logging.debug("got a POST")
 	try:
-            p=decText(request.data)
-            logging.debug(p)
-            processPost(p,request.remote_addr)
+            processPost(data,request.remote_addr)
 	except:
 	    logging.debug("Cant process POST")
     if request.method=='GET':
         logging.debug("got a GET")
         try:
-            g=decText(request.data)
-            #logging.debug(request)
-            logging.debug("Request Data: ")
-            logging.debug(str(g)+"\n")
-            res=processGet(g,request.remote_addr)
+            res=processGet(data,request.remote_addr)
             return res
         except:
             logging.debug("Cant process GET JSON")
