@@ -11,11 +11,18 @@ import json
 import urllib
 import MySQLdb 
 from Crypto.PublicKey import RSA
-
+import filelock
 import logging
+import os
+
 logging.basicConfig(filename="/home/pi/logs/locServer.log",level=logging.DEBUG)
 
-
+pidFile="/home/pi/logs/"+os.path.basename(__file__)+".pid"
+f=open(pidFile,"w")
+f.close()
+lock=filelock.FileLock(pidFile)
+lock.timeout=1
+lock.acquire()
 
 db=MySQLdb.connect('localhost','root','aq12ws','local')
 curs=db.cursor()
@@ -105,5 +112,5 @@ def index():
 
 if __name__ == '__main__':
        # keyGen()
-	app.run(debug=False,use_reloader=True, host='0.0.0.0',port=5050)
+	app.run(debug=False,use_reloader=False, host='0.0.0.0',port=5050)
 	

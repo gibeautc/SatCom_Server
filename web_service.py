@@ -10,11 +10,18 @@ import sys
 import json
 import urllib
 import MySQLdb 
-
-
+import filelock
 import logging
+import os
 logging.basicConfig(filename="/home/pi/logs/web_service.log",level=logging.DEBUG)
 
+pidFile="/home/pi/logs/"+os.path.basename(__file__)+".pid"
+f=open(pidFile, "w")
+f.close()
+
+lock=filelock.FileLock(pidFile)
+lock.timeout=1
+lock.acquire()
 
 db=MySQLdb.connect('localhost','root','aq12ws','gm')
 curs=db.cursor()
@@ -279,5 +286,5 @@ def index():
 		
 		return "done",200
 if __name__ == '__main__':
-	app.run(debug=False,use_reloader=True, host='0.0.0.0')
+	app.run(debug=False,use_reloader=False, host='0.0.0.0')
 	

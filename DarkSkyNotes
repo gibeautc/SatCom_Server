@@ -1,0 +1,117 @@
+DarkSky Database notes
+304e4f1db901c61cf8cb2b6d9be6237a
+https://api.darksky.net/forecast/304e4f1db901c61cf8cb2b6d9be6237a/37.8267,-122.4233
+
+
+location table
+	id		int auto increment (key)	
+	name		varchar(25)
+	lat		float
+	lon		float
+	last_checked	datetime
+	rec		int (1: One time only, 2: Check every 15 min, 3: check once a day, 0: dont check anymore)
+			
+
+current table
+	id		int auto increment
+	locId		int (from location table)
+	time		datetime (from long)
+	summary		varchar(50?)
+	precipInt	float
+	precipProb	float
+	precipType	varchar(10?)
+	temp		float (maybe just use int)
+	pressure	float
+	windSpeed	float (maybe just use int)
+	windGust	float (maybe just use int)
+	windDir		int
+	sky		float (use byte)
+	visibility	int (byte)
+
+
+minutly table
+
+
+
+hourly table
+	id		int auto key
+	locId		int (from location table)
+	ftime		datetime (when we got forecast)
+	time		datetime (from long)
+	summary		varchar(50?)
+	precipInt	float
+	precipProb	float
+	precipType	varchar(10?)
+	temp		float (maybe just use int)
+	pressure	float
+	windSpeed	float (maybe just use int)
+	windGust	float (maybe just use int)
+	windDir		int
+	sky		float (use byte)
+	visibility	int (byte)
+
+daily table
+	id		int auto key
+	locId		int (from location table)
+	fdate		datetime (when we got forcast)	
+	ddate		date (from long)
+	sunrise		datetime (from long)
+	sunset		datetime (from long)
+	moonPhase	float
+	summary		varchar(50?)
+	precipInt	float
+	precipMaxInt	float
+	precipMaxTime	datetime (from long)
+	precipProb	float
+	precipType	varchar(10?)
+	temp		float (maybe just use int)
+	tempLow		float (maybe just use int)
+	tempHigh	float (maybe just use int)
+	timeHigh	datetime (from long)
+	timeLow		datetime (from long)
+	pressure	float
+	windSpeed	float (maybe just use int)
+	windGust	float (maybe just use int)
+	windGustTime	datetime (from long)
+	windDir		int
+	sky		float (use byte)
+	visibility	int (byte)
+
+
+alerts table
+	id		int auto key
+	locId		from location table
+	fdate		datetime (when we got alert)
+	title		varchar(50)
+	description	text
+	issued		datetime (from long) 
+	expires		datetime (from long)
+	regions		array of strings names of regions
+	severity 	"advisory" "watch" or "warning"
+	uri		possible url that has more information
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

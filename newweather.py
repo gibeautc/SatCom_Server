@@ -10,7 +10,7 @@ import subprocess
 import MySQLdb 
 import logging as log
 import urllib2
-
+import filelock
 TEST=False
 
 #Todo
@@ -19,9 +19,16 @@ TEST=False
 #convert weather to urllib2 since I think its better?
 #remove text name from river data, look it up via river_sites and will save a ton of space in the long run
 
+pidFile="/home/pi/logs/"+os.path.basename(__file__)+".pid"
+f=open(pidFile,"w")
+f.close()
+
+lock=filelock.FileLock(pidFile)
+lock.timeout=1
+lock.acquire()
 
 
-#add key rotate functionality
+#tadd key rotate functionality
 
 alert_types=['HUR','TOR','TOW','WRN','SEW','WIN',
 			'FLO','WAT','WND','SVR','HEA','HEA','FOG',
@@ -49,7 +56,7 @@ curs=db.cursor()
 
 #keys and index for weather api
 weather_key=["35859b32434c5985","803ee257021d3c0e"]
-kindex=0
+kindex=1
 
 #update times (min)
 UT_FORECAST=2
@@ -74,6 +81,7 @@ def webResponse(url):
 	except:
 		log.error("Response Fail")
 		log.error(url)
+                log.error(sys.exc_info())
 		return None
 	try:
 		html=response.read()
