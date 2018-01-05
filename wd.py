@@ -38,10 +38,23 @@ def restart(n):
 
     p=subprocess.Popen([n.fileName,],stdout=f,stderr=f)
     f.close()
+
+
+
 f=open("/home/pi/SatCom_Server/wd.conf")
 files=f.read().split("\n")
 for line in files:
-    if line=="":
+    if line=="" or line[0]=="#":
+        continue
+    if line[0]=="L":
+        l=line.replace("L","")
+        if l=="WARNING":
+            log.level=log.WARNING
+        if l=="INFO":
+            log.level=log.INFO
+        if l=="ERROR":
+            log.level=log.ERROR
+
         continue
     tmp=proc(line)
     procList.append(tmp)
