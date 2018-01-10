@@ -1,1 +1,0 @@
- create table forecast(date_rec date,time_rec time,location text,for_date date,hour int,temp int,sky int,condition text,wspd int,wdir int,wc int,qpf decimal,snow decimal,pres decimal,hum decimal, id int not null auto_increment,primary key (id));
