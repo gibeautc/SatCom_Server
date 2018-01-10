@@ -26,12 +26,21 @@ lock.acquire()
 db=MySQLdb.connect('localhost','root','aq12ws','gm')
 curs=db.cursor()
 
+locdb=MySQLdb.connect('localhost','root','aq12ws','local')
+locCurs=locdb.cursor()
 
 def db_connect():
 	global db,curs
 	db=MySQLdb.connect('localhost','root','aq12ws','gm')
 	curs=db.cursor()
 
+def loc_db_connect():
+	global locdb,locCurs
+	locdb=MySQLdb.connect('localhost','root','aq12ws','local')
+	locCurs=locdb.cursor()
+
+
+#could add make a gm class to contain these variables
 #group ID
 group_id=['1523559','27306241','29079593']
 #        [    Crew ,bot test ,   boat   ,]
@@ -216,7 +225,51 @@ def gm_message_rx(request):
 		logging.debug("Process GM message Failed")
 		logging.debug(request.json)
 		logging.error(sys.exc_info())
-						
+		
+def processApp(request):
+    if request.method=="POST":
+        logging.debug("Got a POST request from App")
+        logging.debug(request.data)
+    if request.method=="GET":
+        logging.debug("Got a GET request from app")
+        logging.debug(request.data)
+
+
+def processLoc(request):
+	if request.method=="POST":
+		logging.debug("Got a POST request from Local Client")
+		#add an ID field and check that against database, use it for how to proceed
+		try:
+			jsonData=json.dumps(request.data)
+			logging.debug(jsonData)
+		
+		except:
+			logging.error("Getting JSON from local connection failed")
+			logging.error(sys.exc_info())
+			return
+		
+		stat=jsonData['STATUS']
+		if stat=="OFF":
+			stat="false"
+		if stat=="ON":
+			stat="true"
+		db_out=[str(jsonData['tempOutSide']),str(jsonData['tempInSide']),str(jsonData['hsTemp']),str(jsonData['SET']),stat]
+		q='insert into officeTemp(rec_date,outside,inside,hs,setpoint,status) values(Now(),%s,%s,%s,%s,%s)'
+		try:
+			logging.debug("Adding Office Temp Entry")
+			locCurs.execute(q,db_out)
+			locdb.commit()
+		except:
+			locdb.rollback()
+			logging.error("Error Adding DB entry")
+			logging.error(sys.exc_info())	
+		
+		
+	if request.method=="GET":
+		logging.debug("Got a GET request from Local Client")
+		logging.debug(request.data)
+
+
 					
 app=Flask(__name__)
 @app.route('/gmbot1',methods=['GET','POST'])
@@ -237,6 +290,20 @@ def gm3():
 	gm_message_rx(request)
 	return "done",200
 
+@app.route('/app',methods=['GET','POST'])
+def APP():
+    logging.debug("Message from App")
+    processApp(request)
+    return "done",200
+
+
+@app.route('/loc',methods=['GET','POST'])
+def loc():
+	logging.debug("Message from Local Client")
+	processLoc(request)
+	
+		
+	return "done",200
 
 
 @app.route('/',methods=['GET','POST'])

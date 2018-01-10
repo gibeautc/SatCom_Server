@@ -8,8 +8,19 @@ import os
 import subprocess
 import logging as log
 import urllib2
-
+import filelock
 TEST=False
+
+
+pidFile="/home/pi/logs/"+os.path.basename(__file__)+".pid"
+f=open(pidFile,"w")
+f.close()
+
+lock=filelock.FileLock(pidFile)
+lock.timeout=1
+lock.acquire()
+
+
 
 #Todo
 #add database backup functionality
@@ -18,7 +29,7 @@ TEST=False
 #remove text name from river data, look it up via river_sites and will save a ton of space in the long run
 
 
-db=MySQLdb.connect('localhost','root','aq12ws','darkSky')
+db=MySQLdb.connect('localhost','root','aq12ws','darksky')
 curs=db.cursor()
 
 
@@ -31,25 +42,26 @@ md=0
 log.basicConfig(filename='/home/pi/logs/darkSky.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def webResponse(loc):
+	urlApi='https://api.darksky.net/forecast/304e4f1db901c61cf8cb2b6d9be6237a/'
 	st=time.time()
 	try:
 		response=urllib2.urlopen(urlApi+loc)
 	except:
 		log.error("Response Fail")
-		log.error(url)
-                log.error(sys.exc_info())
+		log.error(urlApi+loc)
+		log.error(sys.exc_info())
 		return None
 	try:
 		html=response.read()
 	except:
 		log.error("Failed to read response")
-		log.error(url)
+		log.error(urlApi+loc)
 		return None
 	try:
 		jsonData=json.loads(html)
 	except:
 		log.error("Failed to get JSON from response")
-		log.error(url)
+		log.error(urlApi+loc)
 		return None
 	et=time.time()
 	log.debug("DarkSky Response time: "+str(et-st))
@@ -64,6 +76,7 @@ def send_gm(message):
 
 
 def check_send_alert():
+        pass
 	#TODO  This will need a rewrite
 	db_out="select description,issued,expires from alert where location='albany' and notify<1"
 	curs.execute(db_out,)
@@ -100,74 +113,304 @@ def check_md5():
 		log.error("Source Code Changed.... restarting")
 		os.execl(sys.executable,sys.executable,*sys.argv)
 
-def parse_current(data,location):
-#TODO ReWrite ME!
+def parseCurrent(locId,data):
+	log.debug(data)
+	log.info("Adding current conditions for "+str(locId))
+	fields=[]
+	values=[]
+	fields.append("recTime")
+	fields.append("locId")
+	values.append(str(locId))
+	
+	
 	try:
-		log.debug(data)
-		log.info("Adding current conditions for "+location)
-		cur=data['current_observation']
-		weather=cur['weather']
-		temp=cur['temp_f']
-		wind_dir=cur['wind_degrees']
-		wind_dir=int(float(wind_dir))
-		wind=cur['wind_mph']
-		wind_gust=cur['wind_gust_mph']
-		pressure=cur['pressure_in']
-		pressure_trend=cur['pressure_trend']
-		precip_1hr=cur['precip_1hr_in']
-		precip_today=cur['precip_today_in']
+		tmp=data['summary']
+		values.append(str(tmp))
+		fields.append("summary")
 	except:
-		log.error("Error Parsing Current Conditions for: "+location)
-		log.error("Here is the data")
-		log.error(data)
-		log.error("Here is the error")
-		log.error(sys.exc_info())
-		return	
-	db_out=[str(location),str(weather),str(temp),str(wind_dir),str(wind),str(wind_gust),str(pressure),str(pressure_trend),str(precip_1hr),str(precip_today)]
-	q='insert into conditions(rec_time,location,weather,temp,wind_dir,wind,wind_gust,pressure,pressure_trend,precip_1hr,precip_today) values(Now(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+		pass
+		
+	try:
+		tmp=data['precipIntensity']
+		values.append(str(tmp))
+		fields.append("precipInt")
+	except:
+		pass
+		
+	try:
+		tmp=data['precipProbability']
+		values.append(str(tmp))
+		fields.append("precipProb")
+	except:
+		pass
+	
+	try:
+		tmp=data['precipType']
+		values.append(str(tmp))
+		fields.append("precipType")
+	except:
+		pass
+	
+	try:
+		tmp=data['temperature']
+		values.append(str(tmp))
+		fields.append("temp")
+	except:
+		pass
+		
+	try:
+		tmp=data['pressure']
+		values.append(str(tmp))
+		fields.append("pressure")
+	except:
+		pass
+		
+	try:
+		tmp=data['windSpeed']
+		values.append(str(tmp))
+		fields.append("windSpeed")
+	except:
+		pass
+		
+	try:
+		tmp=data['windGust']
+		values.append(str(tmp))
+		fields.append("windGust")
+	except:
+		pass	
+		
+	try:
+		tmp=data['windBearing']
+		values.append(str(tmp))
+		fields.append("windDir")
+	except:
+		pass
+		
+	try:
+		tmp=data['nearestStormBearing']
+		values.append(str(tmp))
+		fields.append("stormDir")
+	except:
+		pass
+		
+	try:
+		tmp=data['nearestStormDistance']
+		values.append(str(tmp))
+		fields.append("stormDist")
+	except:
+		pass	
+		
+	try:
+		tmp=data['cloudCover']
+		values.append(str(int(float(tmp)*100)))
+		fields.append("sky")
+	except:
+		pass
+		
+	q='insert into current('
+	for i in range(len(fields)):
+		q=q+fields[i]
+		if i<len(fields)-1:
+			q=q+","
+	q=q+")"
+	q=q+" values(Now(),"
+	for i in range(len(values)):
+		q=q+"%s"
+		if i<len(values)-1:
+			q=q+","
+	q=q+")"
 	try:
 		log.info("commiting current")
-		curs.execute(q,db_out)
+		curs.execute(q,values)
 		db.commit()
 	except:
-		log.error("Error Adding DB entry(Conditions)")
+		log.error("Error Adding DB entry(current)")
 		db.rollback()
 		log.error(sys.exc_info())
 			
-def parse_daily(data,location):
-	#TODO ReWrite ME!!!
-	log.info("Adding Forecast for "+location)
-	hourly=data['hourly_forecast']
-	for e in hourly:
-		day=e['FCTTIME']['mday']
-		month=e['FCTTIME']['mon']
-		year=e['FCTTIME']['year']
-		hour=e['FCTTIME']['hour']
-		temp=e['temp']['english']
-		sky=e['sky']
-		condition=e['condition']
-		wspd=e['wspd']['english']
-		wdir=e['wdir']['degrees']
-		wc=e['windchill']['english']
-		qpf=e['qpf']['english']
-		snow=e['snow']['english']
-		pres=e['mslp']['english']
-		hum=e['humidity']
-		qpf=float(qpf)
-		snow=float(snow)
-		pres=float(pres)
-		db_date=str(year)+'-'+str(month)+'-'+str(day)
-		db_out=[str(db_date),str(location),str(hour),str(temp),str(sky),str(condition),str(wspd),str(wdir),str(wc),str(qpf),str(snow),str(pres),str(hum)]
-		q='insert into forecast(rec_date,rec_time,for_date,location,hour,temp,sky,cond,wspd,wdir,wc,qpf,snow,pres,hum) values(curdate(),curtime(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+def parseDaily(locId,data):
+	log.debug(data)
+	log.info("Adding Daily Forecast for "+str(locId))
+	days=data['data']
+	for d in days:
+		fields=[]
+		values=[]
+		fields.append("fdate")
+		fields.append("locId")
+		values.append(str(locId))
+		
 		try:
-			curs.execute(q,db_out)
-			db.commit()
-			#log.debug("entry added for location: "+location)
+			tmp=d['time']
+			tmp=int(tmp)
+			#now need to make it a datetime string for mysql
+			tmp=datetime.datetime.fromtimestamp(tmp).strftime('%Y-%m-%d %H:%M:%S')
+			values.append(str(tmp))
+			fields.append("ddate")
 		except:
+			pass
+			
+		try:
+			tmp=d['sunriseTime']
+			tmp=int(tmp)
+			#now need to make it a datetime string for mysql
+			tmp=datetime.datetime.fromtimestamp(tmp).strftime('%Y-%m-%d %H:%M:%S')
+			values.append(str(tmp))
+			fields.append("sunrise")
+		except:
+			pass
+			
+		try:
+			tmp=d['sunsetTime']
+			tmp=int(tmp)
+			#now need to make it a datetime string for mysql
+			tmp=datetime.datetime.fromtimestamp(tmp).strftime('%Y-%m-%d %H:%M:%S')
+			values.append(str(tmp))
+			fields.append("sunset")
+		except:
+			pass
+		
+		try:
+			tmp=d['summary']
+			values.append(str(tmp))
+			fields.append("summary")
+		except:
+			pass
+			
+		try:
+			tmp=d['precipIntensity']
+			values.append(str(tmp))
+			fields.append("precipInt")
+		except:
+			pass
+		
+		try:
+			tmp=d['precipIntensityMax']
+			values.append(str(tmp))
+			fields.append("precipMaxInt")
+		except:
+			pass
+			
+		try:
+			tmp=d['precipIntensityMaxTime']
+			tmp=int(tmp)
+			#now need to make it a datetime string for mysql
+			tmp=datetime.datetime.fromtimestamp(tmp).strftime('%Y-%m-%d %H:%M:%S')
+			values.append(str(tmp))
+			fields.append("precipMaxTime")
+		except:
+			pass
+			
+		try:
+			tmp=d['temperatureMaxTime']
+			tmp=int(tmp)
+			#now need to make it a datetime string for mysql
+			tmp=datetime.datetime.fromtimestamp(tmp).strftime('%Y-%m-%d %H:%M:%S')
+			values.append(str(tmp))
+			fields.append("timeHight")
+		except:
+			pass
+			
+		try:
+			tmp=d['temperatureMinTime']
+			tmp=int(tmp)
+			#now need to make it a datetime string for mysql
+			tmp=datetime.datetime.fromtimestamp(tmp).strftime('%Y-%m-%d %H:%M:%S')
+			values.append(str(tmp))
+			fields.append("timeLow")
+		except:
+			pass
+			
+		try:
+			tmp=d['precipProbability']
+			values.append(str(tmp))
+			fields.append("precipProb")
+		except:
+			pass
+		
+		try:
+			tmp=d['precipType']
+			values.append(str(tmp))
+			fields.append("precipType")
+		except:
+			pass
+		
+		try:
+			tmp=d['temperature']
+			values.append(str(tmp))
+			fields.append("temp")
+		except:
+			pass
+		try:
+			tmp=d['temperatureMax']
+			values.append(str(tmp))
+			fields.append("tempHigh")
+		except:
+			pass
+		
+		try:
+			tmp=d['temperatureMin']
+			values.append(str(tmp))
+			fields.append("tempLow")
+		except:
+			pass
+			
+		try:
+			tmp=d['pressure']
+			values.append(str(tmp))
+			fields.append("pressure")
+		except:
+			pass
+			
+		try:
+			tmp=d['windSpeed']
+			values.append(str(tmp))
+			fields.append("windSpeed")
+		except:
+			pass
+			
+		try:
+			tmp=d['windGust']
+			values.append(str(tmp))
+			fields.append("windGust")
+		except:
+			pass	
+			
+		try:
+			tmp=d['windBearing']
+			values.append(str(tmp))
+			fields.append("windDir")
+		except:
+			pass
+					
+		try:
+			tmp=d['cloudCover']
+			values.append(str(int(float(tmp)*100)))
+			fields.append("sky")
+		except:
+			pass
+			
+		q='insert into daily('
+		for i in range(len(fields)):
+			q=q+fields[i]
+			if i<len(fields)-1:
+				q=q+","
+		q=q+")"
+		q=q+" values(Now(),"
+		for i in range(len(values)):
+			q=q+"%s"
+			if i<len(values)-1:
+				q=q+","
+		q=q+")"
+		try:
+			log.info(q)
+			log.info(values)
+			log.info("commiting Daily Record")
+			curs.execute(q,values)
+			db.commit()
+		except:
+			log.error("Error Adding DB entry(Conditions)")
 			db.rollback()
-			log.error("Error Adding DB entry(Forecast)")
-			log.error(sys.exc_info())
-	
+			log.error(sys.exc_info())	
 def parse_alert(data,location):
 	#TODO ReWrite ME!!!
 	log.info("Parsing Alert for "+location)
@@ -195,8 +438,7 @@ def parse_alert(data,location):
 			log.error(sys.exc_info())	
 		
 def set_last(locID):
-	#Not Tested
-	q="UPDATE locations set lastChecked= Now() where id=%s"
+	q="UPDATE locations set lastchecked= Now() where id=%s"
 	try:
 		curs.execute(q,[locID,])
 		db.commit()
@@ -209,7 +451,7 @@ def getForecast(ID,lat,lon,name):
 	#will pull entire forecast for location, current,minutly,hourly,daily,alert
 	#if they are available, decide if they are, and send to seperate parsing functions
 	log.info("Getting forcast for: "+name)
-	url="https://api.darksky.net/forecast/304e4f1db901c61cf8cb2b6d9be6237a/"
+	#url="https://api.darksky.net/forecast/304e4f1db901c61cf8cb2b6d9be6237a/"
 	#plus the lat,lon like 37.8267,-122.4233
 	
 	try:
@@ -227,35 +469,58 @@ def getForecast(ID,lat,lon,name):
 
 
 def need_update():
-	#TODO ReWrite ME!!!
-	
 	#check to see if anything needs update
 	#will return location,type if any are found
 	#for this code, we will only be looking at ones that have a repeat flag
-	curs.execute("SELECT * FROM locations where rep>0")
+	cur=datetime.datetime.now()
+	curs.execute("SELECT * FROM locations where rec>0")
 	data=curs.fetchall()
 	if len(data)==0:
 		log.info("No Entrys set to Repeat")
 	for line in data:
 		location=line[0] #need new index
-		tmp=time.strptime(str(line[1]),'%Y-%m-%d %H:%M:%S')	#need new index
+		tmp=time.strptime(str(line[4]),'%Y-%m-%d %H:%M:%S')
 		forecast_time=datetime.datetime(*tmp[:6])
 
 		forecast_delta=(cur-forecast_time)
 		forecast_delta=forecast_delta.seconds/60 #should be in minutes now
-		#check If rep==1:
+		rep=line[5]
+		locId=line[0]
+		loc=str(line[2])+","+str(line[3])
+		#if rep==1:
 			#get_forecast()
 			#set rep=0
 			#set lastChecked
 			#continue
-		#if rep==2 && delta>15:
-			#get_forecast()
-			#set lastChecked
-			#continue
+		if rep==2 and forecast_delta>15:
+			forecast=webResponse(loc)
+			if forecast is not None:
+				set_last(locId)
+			else:
+				continue
+		else:
+			continue
 		#if rep==3 && delta>60*24:
 			#get_forecast()
 			#set lastChecked
 			#continue
+		try:
+			c=forecast['currently']
+			log.debug(c)
+			parseCurrent(locId,c)
+		except:
+			log.debug("No Current Data for locId: "+str(locId))
+			log.error(sys.exc_info())
+			
+		try:
+			d=forecast['daily']
+			log.debug(d)
+			parseDaily(locId,d)
+		except:
+			log.debug("No Daily Data for locId: "+str(locId))
+			log.error(sys.exc_info())
+			
+			
 			
 		#getForecast should now take (id,lat,lon,name)
 
@@ -265,7 +530,7 @@ def main():
 	while True:
 		check_md5()
 		need_update()
-		check_send_alert()
+		#check_send_alert()
 		time.sleep(10)
 		if startLogs>0:
 			startLogs=startLogs-1

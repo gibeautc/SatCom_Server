@@ -84,7 +84,7 @@ app=Flask(__name__)
 @app.route('/',methods=['GET','POST'])
 def index():
     try:
-        data=decText(request.data)
+        #data=decText(request.data)
         data=json.loads(data)
     except:
         log.error("Error Decoding Request Data")

@@ -15,15 +15,17 @@ location table
 current table
 	id		int auto increment
 	locId		int (from location table)
-	time		datetime (from long)
-	summary		varchar(50?)
+	recTime		datetime (from long)
+	summary		varchar(50)
 	precipInt	float
 	precipProb	float
-	precipType	varchar(10?)
+	precipType	varchar(5)
 	temp		float (maybe just use int)
 	pressure	float
 	windSpeed	float (maybe just use int)
 	windGust	float (maybe just use int)
+	stormDir	int
+	stormDist	int
 	windDir		int
 	sky		float (use byte)
 	visibility	int (byte)
@@ -41,6 +43,7 @@ hourly table
 	summary		varchar(50?)
 	precipInt	float
 	precipProb	float
+	precipAccum	float?
 	precipType	varchar(10?)
 	temp		float (maybe just use int)
 	pressure	float
@@ -64,6 +67,7 @@ daily table
 	precipMaxTime	datetime (from long)
 	precipProb	float
 	precipType	varchar(10?)
+	precipAccum	float?
 	temp		float (maybe just use int)
 	tempLow		float (maybe just use int)
 	tempHigh	float (maybe just use int)
