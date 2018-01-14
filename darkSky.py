@@ -64,7 +64,7 @@ def webResponse(loc):
 		log.error(urlApi+loc)
 		return None
 	et=time.time()
-	log.debug("DarkSky Response time: "+str(et-st))
+	#log.debug("DarkSky Response time: "+str(et-st))
 	return jsonData
 
 def send_gm(message):
@@ -229,7 +229,7 @@ def parseCurrent(locId,data):
 		log.error(sys.exc_info())
 			
 def parseDaily(locId,data):
-	log.debug(data)
+	#log.debug(data)
 	log.info("Adding Daily Forecast for "+str(locId))
 	days=data['data']
 	for d in days:
@@ -457,7 +457,7 @@ def getForecast(ID,lat,lon,name):
 	try:
 		data=webResponse(url+str(lat)+","+str(lon))
 		if data is None:
-			return
+         		return
 	except:
 		#should never get here, errors should be caught in webResponse
 		log.error("Error Getting Forecast from web")
@@ -506,7 +506,7 @@ def need_update():
 			#continue
 		try:
 			c=forecast['currently']
-			log.debug(c)
+			#log.debug(c)
 			parseCurrent(locId,c)
 		except:
 			log.debug("No Current Data for locId: "+str(locId))
@@ -514,7 +514,7 @@ def need_update():
 			
 		try:
 			d=forecast['daily']
-			log.debug(d)
+			#log.debug(d)
 			parseDaily(locId,d)
 		except:
 			log.debug("No Daily Data for locId: "+str(locId))

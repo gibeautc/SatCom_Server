@@ -71,13 +71,6 @@
 	else{
 		echo '<font color="red">DarkSkyStopped</font>';
 	}
-	echo '</br>';
-	if (strpos($proc,"locServer") !== false){
-		echo '<font color="green">Local Server Running</font>';
-	}
-	else{
-		echo '<font color="red">Local Server Stopped</font>';
-	}
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	    // collect value of input field
 		echo '<script>';

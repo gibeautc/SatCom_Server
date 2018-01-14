@@ -236,23 +236,32 @@ def processApp(request):
 
 
 def processLoc(request):
+        jsonData={}
 	if request.method=="POST":
-		logging.debug("Got a POST request from Local Client")
+		logging.debug("Got a POST request from Local Client: "+str(request.remote_addr))
 		#add an ID field and check that against database, use it for how to proceed
 		try:
-			jsonData=json.dumps(request.data)
+			logging.debug(request.data)
+			logging.debug(type(request.data))
+			jsonData=json.loads(request.data.replace("'",'"'))
+                        #jsonData=request.data
 			logging.debug(jsonData)
 		
 		except:
 			logging.error("Getting JSON from local connection failed")
 			logging.error(sys.exc_info())
 			return
-		
+                try:
+                    ID=jsonData['ID']
+
+                except:
+                    logging.warning("No Id field from Client")
+                    return
 		stat=jsonData['STATUS']
 		if stat=="OFF":
-			stat="false"
+			stat="0"
 		if stat=="ON":
-			stat="true"
+			stat="1"
 		db_out=[str(jsonData['tempOutSide']),str(jsonData['tempInSide']),str(jsonData['hsTemp']),str(jsonData['SET']),stat]
 		q='insert into officeTemp(rec_date,outside,inside,hs,setpoint,status) values(Now(),%s,%s,%s,%s,%s)'
 		try:
