@@ -34,15 +34,16 @@ class client(Thread):
 		self.prt("Connected to OWN socket")
 		while True:
 			self.prt("Hello!")
+			self.prt("Buffer: "+str(rxBuf))
 			read_sockets, write_sockets, error_sockets = select.select(socket_list , [], [],1)
 			if read_sockets is None:
 				self.prt("Nothing to Read")
 			for s in read_sockets:
 				rxBuf.append(s.recv(1))
-				self.prt("Buffer: "+str(rxBuf))
+				
 			if len(rxBuf)==0:
 				continue
-			if rxBuf[len(rxBuf)-1]=="}":
+			if "{" in rxBuf and "}" in rxBuf:
 				self.checkMsg(rxBuf)
 				del rxBuf[:]
 		
