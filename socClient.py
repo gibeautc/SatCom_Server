@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import time
+import socket
 
 class soc:
     
@@ -35,10 +36,9 @@ class soc:
 
 
 con=soc()
-con.connect("10.0.0.149,5050")
-while True:
-	con.tx("Hello")
-	time.sleep(10)
+con.connect("10.0.0.149",5050)
+s=con.rx()
+print(s)
 	
 
 
