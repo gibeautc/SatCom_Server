@@ -15,7 +15,7 @@ class soc:
 
     def tx(self, msg):
         totalsent = 0
-        while totalsent < MSGLEN:
+        while totalsent < len(msg):
             sent = self.sock.send(msg[totalsent:])
             if sent == 0:
                 raise RuntimeError("socket connection broken")
