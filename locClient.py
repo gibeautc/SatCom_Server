@@ -40,6 +40,7 @@ def sendTempData():
     f=open("/home/pi/therm/out.dat",'r')
     dat=f.read()
     jsonData={}
+    jsonData['ID']=1
     lines=dat.split('\n')
     for line in lines:
         if "a4ff" in line:
@@ -68,6 +69,7 @@ def sendTempData():
             jsonData['STATUS']=d[1]
         #there is also notes 'NOTE' 
     try:
+        log.debug("Sending:"+str(jsonData))
         r=requests.post("http://10.0.0.149:5000/loc",str(jsonData))
         if r.status_code==200:
             log.debug("Post-200")
