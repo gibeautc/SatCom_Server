@@ -4,6 +4,7 @@ import time
 from threading import Thread, Lock
 from multiprocessing import Queue
 import select
+import sys
 
 mainPipe=Queue(100)
 
@@ -12,10 +13,10 @@ sockListLock=Lock()
 sockList=[]
 portList=[]
 portListLock=Lock()
-
-for x in range(50):
+originPortList=[]
+for x in range(100):
 	portList.append(5051+x)
-
+	originPortList.append(5051+x)
 class client(Thread):
 	def __init__(self,ID,q):
 		Thread.__init__(self)
@@ -60,20 +61,26 @@ def rxThread(p):
 	log("Starting")
 	while True:
 		if len(sockList)==0:
-			log("No Active Sockets")
 			time.sleep(5)
 			continue
 		if not p.empty():
 			log(p.get())
+		#this seems to improve cpu usegae, but trying to track down a timing problem
+		#else:
+		#	time.sleep(1)
 		for s in sockList:
 			if time.time()-s.lastMsg>20:
 				log("Closing Thread with id: "+str(s.ID))
 				portListLock.acquire()
+				log("Got Port Lock")
 				portList.append(s.port)
 				portListLock.release()
+				log("Release Port Lock")
 				sockListLock.acquire()
+				log("Got sock Lock")
 				sockList.remove(s)
 				sockListLock.release()
+				log("Release Sock Lock")
 				
 				
 		#check for sockets to read from
@@ -81,43 +88,99 @@ def rxThread(p):
 
 
 def clientSet(clientsoc):
+	def log(msg):
+		print("(clientSetThread)"+str(msg))
 	global sockList,sockListLock
-	print("Got new Client:")
+	log("Got new Client:")
 	#send them new socket number, let them close this socket.
 	#setup new socket, wait for connect, then return new socket 
 	singSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	portListLock.acquire()
+	
 	for x in portList:
 		try:
 			p=x
-			print("Tring Port: "+str(p))
+			log("Tring Port: "+str(p))
 			#time.sleep(.1)
+			portListLock.acquire()
 			singSock.bind(("10.0.0.149", p))
-			print("Binding Successfull")
+			log("Binding Successfull")
 			portList.remove(x)
+			portListLock.release()
 			break		
 		except:
-			print("Port "+str(p)+" in use (or other error)")
+			log("Port "+str(p)+" in use (or other error)")
+			portListLock.release()
 			continue
-	portListLock.release()
+	
+	try:
+		#incase p wasnt assigned to anything
+		dump=p
+	except:
+		return
 	tmpId=clientsoc.recv(5)
-	print("ID recv from client: "+str(tmpId))
+	log("ID recv from client: "+str(tmpId))
 	clientsoc.send(str(p))
 	clientsoc.close()
 	singSock.listen(1)
 	(cl,addr)=singSock.accept()
-	print("Address:"+str(addr))
+	log("Address:"+str(addr))
 	tmpClient=client(tmpId,mainPipe)
 	tmpClient.port=p
 	tmpClient.soc=cl
 	tmpClient.start()
-	print("Got Lock, adding to list")
+	log("Got Lock, adding to list")
 	sockListLock.acquire()
 	sockList.append(tmpClient)
 	sockListLock.release()
+	log("Releasing Lock")
 	
 	return
 
+def mon():
+	while True:
+		f=open("SocServerMon","a")
+		idlist=[]
+		usedPorts=[]
+		for s in sockList:
+			idlist.append(int(s.ID))
+			usedPorts.append(s.port)
+		idlist.sort()
+		usedPorts.sort()
+		portListLock.acquire()
+		tmp=0
+		try:
+			del portList[:]
+			for p in originPortList:
+				portList.append(p)
+			for p in usedPorts:
+				tmp=p
+				portList.remove(p)
+		except:
+			f.write("Failed to reset PortList: "+str(tmp)+"\n")
+			f.write(str(sys.exc_info()))
+			f.write("\n")
+		portList.sort()
+		portListLock.release()
+		
+		f.write("Active Clients: "+str(len(sockList))+"\n")
+		f.write("Ports Left    : "+str(len(portList))+"\n")
+		f.write("ID's\n")
+		f.write(str(idlist))
+		f.write("\n")
+		f.write("Used ports\n")
+		f.write(str(usedPorts))
+		f.write("\n")
+		f.write("Free ports\n")
+		f.write(str(portList))
+		f.write("\n")
+		
+		f.close()
+		time.sleep(5)
+
+
+mon=Thread(target=mon)
+mon.daemon=True
+mon.start()
 
 while True:
 	try:
