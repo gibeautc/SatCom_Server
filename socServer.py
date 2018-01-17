@@ -2,63 +2,80 @@
 import socket
 import time
 from threading import Thread, Lock
-from multiprocessing import Pipe
+from multiprocessing import Queue
 import select
 
-mainPipe=Pipe()
+mainPipe=Queue(100)
+
 mainLock=Lock() #used to lock mainPipe if needed
 sockListLock=Lock()
 sockList=[]
+portList=[]
+portListLock=Lock()
+
+for x in range(50):
+	portList.append(5051+x)
 
 class client(Thread):
 	def __init__(self,ID,q):
 		Thread.__init__(self)
 		self.soc=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.soc.setblocking(0)
 		self.ID=ID
+		self.port=0
 		self.daemon=True
-		self.ownPipe=Pipe()
+		self.ownPipe=Queue(10)
 		self.mainPipe=q
+		self.lastMsg=time.time()
 		self.log="(client:"+self.ID+")"
 	def prt(self,msg):
 		print(self.log+str(msg))
-	def checkMsg(buf):
-		self.prt("Mesage Received")
-		print(''.join(buf))
+	def checkMsg(self,buf):
+		#self.prt("Mesage Received")
+		#print(''.join(buf))
+		self.mainPipe.put(''.join(buf))
 		
 	def run(self):
-		socket_list=[]
-		socket_list.append(self.soc)
-		self.soc.listen(1)
+		self.prt("Connected to Own Socket Now")
 		rxBuf=[]
-		(cl,addr)=self.soc.accept()
 		self.prt("Connected to OWN socket")
 		while True:
-			self.prt("Hello!")
-			self.prt("Buffer: "+str(rxBuf))
-			read_sockets, write_sockets, error_sockets = select.select(socket_list , [], [],1)
-			if read_sockets is None:
-				self.prt("Nothing to Read")
-			for s in read_sockets:
-				rxBuf.append(s.recv(1))
-				
+			#try:
+			rxBuf.append(self.soc.recv(1))
+			#except:
+			#	continue
 			if len(rxBuf)==0:
+				self.prt("HERE")
 				continue
-			if "{" in rxBuf and "}" in rxBuf:
+			if "\n" in rxBuf:
 				self.checkMsg(rxBuf)
 				del rxBuf[:]
+				self.lastMsg=time.time()
 		
 	
-def rxThread():
+def rxThread(p):
 	def log(msg):
-		print("(rxThread)"+msg)
+		print("(rxThread)"+str(msg))
 	global sockList	
 	log("Starting")
 	while True:
-		time.sleep(5)
 		if len(sockList)==0:
 			log("No Active Sockets")
+			time.sleep(5)
 			continue
-		log("Checking")
+		if not p.empty():
+			log(p.get())
+		for s in sockList:
+			if time.time()-s.lastMsg>20:
+				log("Closing Thread with id: "+str(s.ID))
+				portListLock.acquire()
+				portList.append(s.port)
+				portListLock.release()
+				sockListLock.acquire()
+				sockList.remove(s)
+				sockListLock.release()
+				
+				
 		#check for sockets to read from
 		#make sure to aquire lock before messing with socklist
 
@@ -69,23 +86,30 @@ def clientSet(clientsoc):
 	#send them new socket number, let them close this socket.
 	#setup new socket, wait for connect, then return new socket 
 	singSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	for x in range(5):
+	portListLock.acquire()
+	for x in portList:
 		try:
-			p=5051+x
+			p=x
 			print("Tring Port: "+str(p))
-			time.sleep(2)
+			#time.sleep(.1)
 			singSock.bind(("10.0.0.149", p))
 			print("Binding Successfull")
+			portList.remove(x)
 			break		
 		except:
 			print("Port "+str(p)+" in use (or other error)")
 			continue
+	portListLock.release()
 	tmpId=clientsoc.recv(5)
 	print("ID recv from client: "+str(tmpId))
 	clientsoc.send(str(p))
 	clientsoc.close()
+	singSock.listen(1)
+	(cl,addr)=singSock.accept()
+	print("Address:"+str(addr))
 	tmpClient=client(tmpId,mainPipe)
-	tmpClient.soc=singSock
+	tmpClient.port=p
+	tmpClient.soc=cl
 	tmpClient.start()
 	print("Got Lock, adding to list")
 	sockListLock.acquire()
@@ -101,7 +125,7 @@ while True:
 		serversocket.bind(("10.0.0.149", 5050))
 		print("Init Socket Setup")
 		serversocket.listen(5)
-		rx=Thread(target=rxThread)
+		rx=Thread(target=rxThread,args=(mainPipe,))
 		#rx thread is what will check clients for input and deal with passing it around
 		rx.daemon=True
 		rx.start()
