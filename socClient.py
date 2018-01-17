@@ -22,7 +22,7 @@ class soc:
 			if sent == 0:
 				raise RuntimeError("socket connection broken")
 			totalsent = totalsent + sent
-		print(totalsent)
+		#print(totalsent)
 
     def rx(self,MSGLEN):
         chunks = []
@@ -71,7 +71,7 @@ while True:
 		c=None
 		c=connect()
 	try:
-		print("Client: "+str(ID)+" running")
+		#print("Client: "+str(ID)+" running")
 		c.tx("{'ID':"+str(ID)+"}\n")
 		time.sleep(10)
 	except:

@@ -6,11 +6,11 @@ do
 	./socClient.py $i &
 	PIDARRAY+=($!)
 done
-$PIDARRAY
+echo $PIDARRAY
 read junk
 for ((i=0;i<$1;i+=1))
 do
-	kill PIDARRAY[i]
+	kill ${PIDARRAY[i]}
 done
 
 #./socClient.py 1 &
