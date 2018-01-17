@@ -1,0 +1,35 @@
+#!/bin/bash
+echo $1 "Clients"
+PIDARRAY=()
+for ((i=1;i<=$1;i+=1))
+do
+	./socClient.py $i &
+	PIDARRAY+=($!)
+done
+$PIDARRAY
+read junk
+for ((i=0;i<$1;i+=1))
+do
+	kill PIDARRAY[i]
+done
+
+#./socClient.py 1 &
+#one=$!
+#./socClient.py 2 &
+#two=$!
+#./socClient.py 3 &
+#three=$!
+#./socClient.py 4 &
+#four=$!
+#./socClient.py 5 &
+#five=$!
+#./socClient.py 6 &
+#six=$!
+#read junk
+
+#kill $one
+#kill $two
+#kill $three
+#kill $four
+#kill $five
+#kill $six
