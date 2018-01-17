@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+./socClient.py 1 &
+one=$!
+read junk
+
+kill $one
