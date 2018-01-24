@@ -6,7 +6,7 @@ import os
 import time
 import subprocess
 import logging as log
-
+import mail
 
 #add logging,
 #add checks for if filename exists
@@ -66,6 +66,7 @@ for n in procList:
     try:
         n.lock.acquire()
         log.warning("Got In!")
+        mail.send_message("WatchDog",n.pidFile)
         log.warning(n.pidFile)
         n.lock.release()
     except:
