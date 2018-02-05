@@ -78,7 +78,7 @@ def scan():
                 q=q[1]
                 q=int(q.replace("dBm",""))
                 #print("Level:" +str(q))
-        if a is None and e is None:
+        if a is None or e is None:
             continue
         if e is None:
             e=""
@@ -88,7 +88,8 @@ def scan():
             s=0
         if a is None:
             a="Unknown"
-
+        if e.replace(" ","")=="":
+            continue
         add(e,q,s,a)
         #print("")
     #print(len(cells))

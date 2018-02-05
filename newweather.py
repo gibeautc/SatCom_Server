@@ -11,6 +11,7 @@ import MySQLdb
 import logging as log
 import urllib2
 import filelock
+import mail
 TEST=False
 
 #Todo
@@ -41,7 +42,7 @@ alert_strings=['Hurricane Local Statement','Tornado Warning',
 				'High Wind Advisory','Severe Weather Statement',
 				'Heat Advisory','Dense Fog Advisory',
 				'Special Weather Statement','Fire Weather Advisory',
-				'Volcanic Activity Statement','Hurricane Wind Warning',
+                                'Volcanic Activity Statement','Hurricane Wind Warning',
 				'Record Set','Public Reports',
 				'Public Information Statement']
 
@@ -56,7 +57,7 @@ curs=db.cursor()
 
 #keys and index for weather api
 weather_key=["35859b32434c5985","803ee257021d3c0e"]
-kindex=1
+kindex=0
 
 #update times (min)
 UT_FORECAST=2
