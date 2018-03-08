@@ -239,7 +239,7 @@ def processApp(request):
 
 def processWxReq(request):
 	if request.method=="POST":
-		logging.warning("Not taking POST requests on wx"
+		logging.debug(request.data)
 	if request.method=="GET":
 		logging.debug(request.data)
 		#this should contain location information
@@ -325,7 +325,7 @@ def loc():
 	return "done",200
 
 @app.route('/wx',methods=['GET','POST'])
-def loc():
+def wx():
 	logging.debug("Message from Local Client")
 	processWxReq(request)
 	return "done",200
