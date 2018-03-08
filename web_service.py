@@ -29,6 +29,9 @@ curs=db.cursor()
 locdb=MySQLdb.connect('localhost','root','aq12ws','local')
 locCurs=locdb.cursor()
 
+wxdb=MySQLdb.connect('localhost','root','aq12ws','weather')
+wxCurs=wxdb.cursor()
+
 def db_connect():
 	global db,curs
 	db=MySQLdb.connect('localhost','root','aq12ws','gm')
@@ -234,6 +237,13 @@ def processApp(request):
         logging.debug("Got a GET request from app")
         logging.debug(request.data)
 
+def processWxReq(request):
+	if request.method=="POST":
+		logging.warning("Not taking POST requests on wx"
+	if request.method=="GET":
+		logging.debug(request.data)
+		#this should contain location information
+
 
 def processLoc(request):
         jsonData={}
@@ -312,6 +322,12 @@ def loc():
 	processLoc(request)
 	
 		
+	return "done",200
+
+@app.route('/wx',methods=['GET','POST'])
+def loc():
+	logging.debug("Message from Local Client")
+	processWxReq(request)
 	return "done",200
 
 
