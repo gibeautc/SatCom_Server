@@ -13,10 +13,17 @@ import filelock
 import logging
 import os
 from GM import *
-from Handler import *
-logging.basicConfig(filename="/home/pi/logs/web_service.log",level=logging.DEBUG)
+from Handlers import *
 
-pidFile="/home/pi/logs/"+os.path.basename(__file__)+".pid"
+
+if os.path.isdir("/home/pi"):
+	system="pi"
+else:
+	system="chadg"
+logfile="/home/"+system+"/logs/web_service.log"
+logging.basicConfig(filename=logfile,level=logging.DEBUG)
+
+pidFile="/home/"+system+"/logs/"+os.path.basename(__file__)+".pid"
 f=open(pidFile, "w")
 f.close()
 
@@ -62,8 +69,8 @@ def loc():
 @app.route('/wx',methods=['GET','POST'])
 def wx():
 	logging.debug("Message from Local Client")
-	return processWxReq(request)
-	return "done",200
+	msg,code=processWxReq(request)
+	return msg,code
 
 
 @app.route('/',methods=['GET','POST'])

@@ -2,6 +2,7 @@
 
 import logging
 import MySQLdb
+import time
 
 locdb=MySQLdb.connect('localhost','root','aq12ws','local')
 locCurs=locdb.cursor()
@@ -9,7 +10,12 @@ locCurs=locdb.cursor()
 wxdb=MySQLdb.connect('localhost','root','aq12ws','weather')
 wxCurs=wxdb.cursor()
 
-
+def findLocation():
+	#need a valid loction ID from database, we have lat and long
+	#in request data. Pull all locations, check if there is one that has
+	#an acceptable distance   say 5 Miles?
+	#if we have one return the ID, if not we need to add it in (with rec of 1)
+	# and return new ID
 
 def loc_db_connect():
 	global locdb,locCurs
@@ -78,13 +84,12 @@ def processApp(request):
 def processWxReq(request):
 	if request.method=="POST":
 		logging.debug(request.data)
-		data={
+		#data={
 	if request.method=="GET":
 		logging.debug(request.data)
 		#this should contain location information
-		
-		
-		#return json object, and 200   or some error code
+	time.sleep(10)
+	return "{hi:1}",200
 		
 
 def processLoc(request):
