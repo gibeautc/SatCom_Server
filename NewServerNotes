@@ -1,0 +1,20 @@
+New Server Notes	
+
+Internal IP: 10.0.0.75
+SSH 8075
+API 8175
+
+
+
+
+
+Will get ssh and api access direct from net
+
+
+
+Need to setup SSH port
+Fail2Ban
+MySQL
+Git
+pull down server repo
+go
