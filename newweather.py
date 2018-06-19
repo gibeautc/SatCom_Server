@@ -216,7 +216,7 @@ def store_river(ID,location,height,flow):
 def parse_current(data,location):
 	#data=json.loads(data)
 	try:
-		log.debug(data)
+		#log.debug(data)
 		log.info("Adding current conditions for "+location)
 		cur=data['current_observation']
 		weather=cur['weather']
