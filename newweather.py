@@ -20,7 +20,12 @@ TEST=False
 #convert weather to urllib2 since I think its better?
 #remove text name from river data, look it up via river_sites and will save a ton of space in the long run
 
-pidFile="/home/pi/logs/"+os.path.basename(__file__)+".pid"
+if os.path.isdir("/home/pi"):
+	system="pi"
+else:
+	system="chadg"
+
+pidFile="/home/"+system+"/logs/"+os.path.basename(__file__)+".pid"
 f=open(pidFile,"w")
 f.close()
 
@@ -73,7 +78,7 @@ start=True
 md=0
 
 
-log.basicConfig(filename='/home/pi/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+log.basicConfig(filename='/home/'+system+'/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def webResponse(url):
 	st=time.time()
