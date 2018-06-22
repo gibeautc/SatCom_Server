@@ -13,7 +13,7 @@ def findLocation():
 	#an acceptable distance   say 5 Miles?
 	#if we have one return the ID, if not we need to add it in (with rec of 1)
 	# and return new ID
-
+	pass
 def gm_message_rx(request):
 	try:
 		data=request.json
