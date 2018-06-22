@@ -51,28 +51,6 @@ def gm3():
 	gm_message_rx(request)
 	return "done",200
 
-@app.route('/app',methods=['GET','POST'])
-def APP():
-    logging.debug("Message from App")
-    processApp(request)
-    return "done",200
-
-
-@app.route('/loc',methods=['GET','POST'])
-def loc():
-	logging.debug("Message from Local Client")
-	processLoc(request)
-	
-		
-	return "done",200
-
-@app.route('/wx',methods=['GET','POST'])
-def wx():
-	logging.debug("Message from Local Client")
-	msg,code=processWxReq(request)
-	return msg,code
-
-
 @app.route('/sat',methods=['GET','POST'])
 #Message coming from sat. Could be an hourly update with or without attached message, or it could be priority message (location should be attached to that as well)
 #assuming message has its own lat/lon   we will use that for groupme. If it doesnt, use the iridium cords but somehow show that its not accurate. 
@@ -83,7 +61,7 @@ def wx():
 #have hook on SatCom Groupme, any message that starts with a a $ and then is less then 50 char will be sent. For now no restriction, but may want to think about that in the future. 
 def sat():
 	if request.method=='POST':
-		logging.debug("got a post")
+		logging.debug("got a post at /sat")
 		try:
 			data=request.form['data']
 			data=data.decode('hex')
@@ -92,12 +70,12 @@ def sat():
 			iridium_lat=request.form['iridium_latitude']
 			iridium_lon=request.form['iridium_longitude']
 			ir_cep=request.form['iridium_cep']
-			print("Message Number: "+str(momsn))
-			print("Lat: "+str(iridium_lat))
-			print("Lon: "+str(iridium_lon))
-			print("Accuracy: "+str(ir_cep))
-			print("Time: "+str(transmit_time))
-			print("Message: "+str(data))
+			logging.info("Message Number: "+str(momsn))
+			logging.info("Lat: "+str(iridium_lat))
+			logging.info("Lon: "+str(iridium_lon))
+			logging.info("Accuracy: "+str(ir_cep))
+			logging.info("Time: "+str(transmit_time))
+			logging.info("Message: "+str(data))
 			if str(data).startswith("$"):
 				data=data[1:]#strip off the leading $
 				dset=data.split(",")
@@ -119,57 +97,11 @@ def sat():
 				#send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
 		except:
 			logging.error("POST Failed")
-			
-		
 		return "done",200
-
 
 
 @app.route('/',methods=['GET','POST'])
 def index():
-	if request.method=='POST':
-		logging.debug("got a post")
-		#try:
-		#	logging.debug(request.json)
-		#except:
-		#	logging.debug("Cant Print Request Json")
-		try:
-			data=request.form['data']
-			data=data.decode('hex')
-			momsn=request.form['momsn']
-			transmit_time=request.form['transmit_time']
-			iridium_lat=request.form['iridium_latitude']
-			iridium_lon=request.form['iridium_longitude']
-			ir_cep=request.form['iridium_cep']
-			print("Message Number: "+str(momsn))
-			print("Lat: "+str(iridium_lat))
-			print("Lon: "+str(iridium_lon))
-			print("Accuracy: "+str(ir_cep))
-			print("Time: "+str(transmit_time))
-			print("Message: "+str(data))
-			if str(data).startswith("$"):
-				data=data[1:]#strip off the leading $
-				dset=data.split(",")
-				Lat=dset[0]
-				Lon=dset[1]
-				Voltage=dset[2]
-				Status=dset[3]
-				#need to add bot info to these calls
-				#send_gm("Update:\rLat: "+str(Lat)+"\rLon: "+str(Lon)+"\rVoltage: "+str(Voltage)+"\rStatus: "+str(Status))
-				#send_gm("http://maps.google.com/maps?q="+str(Lat)+","+str(Lon))
-			elif str(data)=="":
-				#I think a blank message is sent when tring to retreve a message
-				#either way, no need to send a blank message to groupme
-				return "done",200	
-			else:
-				#need to add bot info to these calls
-				pass
-				#send_gm("Message Received from SatCom: "+str(data))		
-				#send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
-		except:
-			logging.error("POST Failed")
-			
-		
 		return "done",200
 if __name__ == '__main__':
 	app.run(debug=False,use_reloader=False, host='0.0.0.0')

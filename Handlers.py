@@ -4,9 +4,6 @@ import logging
 import MySQLdb
 import time
 
-locdb=MySQLdb.connect('localhost','root','aq12ws','local')
-locCurs=locdb.cursor()
-
 wxdb=MySQLdb.connect('localhost','root','aq12ws','weather')
 wxCurs=wxdb.cursor()
 
@@ -16,12 +13,6 @@ def findLocation():
 	#an acceptable distance   say 5 Miles?
 	#if we have one return the ID, if not we need to add it in (with rec of 1)
 	# and return new ID
-
-def loc_db_connect():
-	global locdb,locCurs
-	locdb=MySQLdb.connect('localhost','root','aq12ws','local')
-	locCurs=locdb.cursor()
-
 
 def gm_message_rx(request):
 	try:
@@ -70,67 +61,3 @@ def gm_message_rx(request):
 		logging.debug("Process GM message Failed")
 		logging.debug(request.json)
 		logging.error(sys.exc_info())
-
-
-
-def processApp(request):
-    if request.method=="POST":
-        logging.debug("Got a POST request from App")
-        logging.debug(request.data)
-    if request.method=="GET":
-        logging.debug("Got a GET request from app")
-        logging.debug(request.data)
-
-def processWxReq(request):
-	if request.method=="POST":
-		logging.debug(request.data)
-		#data={
-	if request.method=="GET":
-		logging.debug(request.data)
-		#this should contain location information
-	time.sleep(10)
-	return "{hi:1}",200
-		
-
-def processLoc(request):
-        jsonData={}
-	if request.method=="POST":
-		logging.debug("Got a POST request from Local Client: "+str(request.remote_addr))
-		#add an ID field and check that against database, use it for how to proceed
-		try:
-			logging.debug(request.data)
-			logging.debug(type(request.data))
-			jsonData=json.loads(request.data.replace("'",'"'))
-                        #jsonData=request.data
-			logging.debug(jsonData)
-		
-		except:
-			logging.error("Getting JSON from local connection failed")
-			logging.error(sys.exc_info())
-			return
-                try:
-                    ID=jsonData['ID']
-
-                except:
-                    logging.warning("No Id field from Client")
-                    return
-		stat=jsonData['STATUS']
-		if stat=="OFF":
-			stat="0"
-		if stat=="ON":
-			stat="1"
-		db_out=[str(jsonData['tempOutSide']),str(jsonData['tempInSide']),str(jsonData['hsTemp']),str(jsonData['SET']),stat]
-		q='insert into officeTemp(rec_date,outside,inside,hs,setpoint,status) values(Now(),%s,%s,%s,%s,%s)'
-		try:
-			logging.debug("Adding Office Temp Entry")
-			locCurs.execute(q,db_out)
-			locdb.commit()
-		except:
-			locdb.rollback()
-			logging.error("Error Adding DB entry")
-			logging.error(sys.exc_info())	
-		
-		
-	if request.method=="GET":
-		logging.debug("Got a GET request from Local Client")
-		logging.debug(request.data)

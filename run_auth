@@ -1,5 +1,0 @@
-#!/bin/bash
-
-echo "Starting"
-tail -f -n0 /var/log/auth.log > /home/pi/SatCom_Server/authpipe &
-./auth2.py

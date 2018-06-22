@@ -1,3 +1,0 @@
-USE weather;
-SELECT hour,temp,sky,wspd from forecast where location="albany" and rec_date=DATE(NOW()) and hour=14 order by rec_date,rec_time desc limit 1;
-SHOW warnings;
