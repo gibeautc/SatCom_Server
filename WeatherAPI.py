@@ -33,9 +33,6 @@ lock=filelock.FileLock(pidFile)
 lock.timeout=1
 lock.acquire()
 
-
-#tadd key rotate functionality
-
 alert_types=['HUR','TOR','TOW','WRN','SEW','WIN',
 			'FLO','WAT','WND','SVR','HEA','HEA','FOG',
 			'FOG','SPE','FIR','VOL','HWW','REC','REP','PUB']
@@ -50,11 +47,6 @@ alert_strings=['Hurricane Local Statement','Tornado Warning',
                                 'Volcanic Activity Statement','Hurricane Wind Warning',
 				'Record Set','Public Reports',
 				'Public Information Statement']
-
-
-
-
-
 
 
 db=MySQLdb.connect('localhost','root','aq12ws','weather')
@@ -77,10 +69,7 @@ ALERT=0x03
 start=True
 md=0
 
-
-log.basicConfig(filename='/home/'+system+'/logs/weather.log',level=log.DEBUG,format='%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
-def webResponse(url):
+def _webResponse(url):
 	st=time.time()
 	try:
 		response=urllib2.urlopen(url)
@@ -108,12 +97,7 @@ def webResponse(url):
 		log.debug("Weather Response time: "+str(et-st))
 	return jsonData
 
-def send_gm(message):
-	bot='0111eaa305c26110dd21040a0a'	#real
-	#bot='6156eb1065fb54295ea8ae138d'  #test
-	params=urllib.urlencode({'bot_id':bot,'text':message})
-	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
-	log.debug(f.read())
+
 
 
 def check_send_alert():

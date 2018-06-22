@@ -8,7 +8,6 @@ import re
 import sys
 import json
 import urllib
-import MySQLdb 
 import filelock
 import logging
 import os
