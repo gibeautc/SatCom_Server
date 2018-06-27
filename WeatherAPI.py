@@ -118,7 +118,7 @@ def get_forecast(lat,lon):
 			lastDay=e['FCTTIME']['mday']
 			day=lastDay
 		if lastDay!=day:
-			print("New Day")
+			log.debug("New Day")
 			if mode=='day':
 				entDict={}
 				entDict['day']=e['FCTTIME']['mday']
