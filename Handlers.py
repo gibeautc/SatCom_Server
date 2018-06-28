@@ -3,6 +3,9 @@
 import logging
 import urllib
 
+dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
+cur=db.cursor()
+
 def send_gm(message):
 	bot='0111eaa305c26110dd21040a0a'	#real
 	params=urllib.urlencode({'bot_id':bot,'text':message})
@@ -19,7 +22,10 @@ def sat_message_rx(request):
 	#have hook on SatCom Groupme, any message that starts with a a $ and then is less then 50 char will be sent. For now no restriction, but may want to think about that in the future. 
 	try:
 		data=request.form['data']
-		data=data.decode('hex')
+		logging.info("Type of Data")
+		logging.info(type(data))
+		msg=data.decode('hex')
+		logging.info(type(msg))
 		momsn=request.form['momsn']
 		transmit_time=request.form['transmit_time']
 		iridium_lat=request.form['iridium_latitude']
@@ -31,6 +37,15 @@ def sat_message_rx(request):
 		logging.info("Accuracy: "+str(ir_cep))
 		logging.info("Time: "+str(transmit_time))
 		logging.info("Message: "+str(data))
+		q="insert into messages(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
+		try:
+			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon))
+			dbb.commit()
+			#log.debug("entry added for location: "+location)
+		except:
+			dbb.rollback()
+			logging.error("Error Adding DB entry(Forecast)")
+			logging.error(sys.exc_info())
 		#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
 		#This is 10 bytes, if the messge is longer then everthing else is actual text
 		if len(msg)<10:
@@ -52,6 +67,7 @@ def sat_message_rx(request):
 			send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
 	except:
 		logging.error("POST Failed")
+		logging.error(sys.exc_info())
 
 def gm_message_rx(request):
 	try:
