@@ -2,9 +2,9 @@
 
 import logging
 import urllib
-
+import MySQLdb
 dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
-cur=db.cursor()
+cur=dbb.cursor()
 
 def send_gm(message):
 	bot='0111eaa305c26110dd21040a0a'	#real
@@ -39,7 +39,7 @@ def sat_message_rx(request):
 		logging.info("Message: "+str(data))
 		q="insert into messages(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
 		try:
-			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon))
+			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
 			dbb.commit()
 			#log.debug("entry added for location: "+location)
 		except:
