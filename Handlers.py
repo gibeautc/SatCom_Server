@@ -3,6 +3,7 @@
 import logging
 import urllib
 import MySQLdb
+import sys
 dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
 cur=dbb.cursor()
 
