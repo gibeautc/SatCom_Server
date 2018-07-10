@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import json
-import MySQLdb
 import datetime
 import os
 import logging as log
@@ -27,8 +26,6 @@ alert_strings=['Hurricane Local Statement','Tornado Warning',
 				'Record Set','Public Reports',
 				'Public Information Statement']
 
-db=MySQLdb.connect('localhost','root','aq12ws','weather')
-curs=db.cursor()
 
 def _webResponse(url):
 	try:

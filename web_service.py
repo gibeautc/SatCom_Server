@@ -14,14 +14,10 @@ import os
 from Handlers import *
 from WeatherAPI import *
 
-if os.path.isdir("/home/pi"):
-	system="pi"
-else:
-	system="chadg"
-logfile="/home/"+system+"/logs/web_service.log"
+logfile="/root/logs/web_service.log"
 logging.basicConfig(filename=logfile,level=logging.DEBUG)
 
-pidFile="/home/"+system+"/logs/"+os.path.basename(__file__)+".pid"
+pidFile="/root/logs/"+os.path.basename(__file__)+".pid"
 f=open(pidFile, "w")
 f.close()
 
