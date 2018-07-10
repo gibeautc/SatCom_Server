@@ -38,7 +38,7 @@ def sat_message_rx(request):
 		logging.info("Accuracy: "+str(ir_cep))
 		logging.info("Time: "+str(transmit_time))
 		logging.info("Message: "+str(data))
-		q="insert into messages(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
+		q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
 		try:
 			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
 			dbb.commit()
@@ -96,7 +96,7 @@ def gm_message_rx(request):
 				#send message to sat
 				IMEI='300234064380130'
 				NAME="gibeautc@oregonstate.edu"
-				PASSWORD='aq12ws'
+				PASSWORD='myvice12'
 				DATA=message[1:]
 				params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
 				f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
