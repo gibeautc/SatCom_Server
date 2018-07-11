@@ -4,14 +4,19 @@ import logging
 import urllib
 import MySQLdb
 import sys
+import struct
 dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
 cur=dbb.cursor()
 
 def send_gm(message):
-	bot='0111eaa305c26110dd21040a0a'	#real
+	#bot='0111eaa305c26110dd21040a0a'	#crew
+	bot='b3e83fd81cfbe44a7ea8a22030'	#SatCom
 	params=urllib.urlencode({'bot_id':bot,'text':message})
 	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
-	log.debug(f.read())
+	try:
+		log.debug(f.read())
+	except:
+		print(f.read())
 
 def sat_message_rx(request):
 	#Message coming from sat. Could be an hourly update with or without attached message, or it could be priority message (location should be attached to that as well)
@@ -49,26 +54,53 @@ def sat_message_rx(request):
 			logging.error(sys.exc_info())
 		#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
 		#This is 10 bytes, if the messge is longer then everthing else is actual text
-		if len(msg)<10:
+		if len(msg)<20:
 			#This could be because a blank message is send when checking rx, or a bad message
 			logging.warning("Data is too short")
 			return	
 		else:
-			locData=msg[:10]
-			locData=bytearray.fromhex(locData)
-			gpsLat=struct.unpack('f', locData[:4])
-			gpsLon=struct.unpack('f', locData[4:8])
-			warn=locData[8]
-			crit=locData[9]
-			tmsg="Message Received from SatCom: "
-			if len(msg)>10:
-				tmsg=tmsg+str(msg[10:])
-			send_gm(tmsg)		
-			send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
-			send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
+			procPayLoad(msg)
 	except:
 		logging.error("POST Failed")
 		logging.error(sys.exc_info())
+def procPayLoad(msg):
+	msg=msg.decode("hex")
+	print(msg)
+	import binascii
+	latData=msg[:4]
+	lonData=msg[4:8]
+	print(len(latData))
+	print(binascii.hexlify(latData))
+	print(len(lonData))
+	print(binascii.hexlify(lonData))
+	gpsLat=struct.unpack('f', latData)[0]
+	gpsLon=struct.unpack('f', lonData)[0]
+	warn=msg[8]
+	crit=msg[9]
+	
+	print(type(crit))
+	print("warn/crit")
+	print(warn)
+	print(crit)
+	tmsg="Message Received from SatCom: "
+	if len(msg)>10:
+		tmsg=tmsg+str(msg[10:])
+	send_gm(tmsg)		
+	try:
+		send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
+	except:
+		pass
+	try:
+		send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
+		mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
+		print(mapUrl)
+		send_gm(mapUrl)
+	except:
+		pass
+	if warn>0:
+		send_gm("Warning Code: "+str(warn))
+	if crit>0:
+		send_gm("Critial Code: "+str(crit))
 
 def gm_message_rx(request):
 	try:
@@ -117,3 +149,4 @@ def gm_message_rx(request):
 		
 if __name__=="__main__":
 	print("Testing Handlers")
+	procPayLoad("cf5b3242db7af6c20201")
