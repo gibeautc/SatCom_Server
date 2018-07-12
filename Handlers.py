@@ -132,7 +132,7 @@ def gm_message_rx(request):
 			f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
 			resp=f.read()
 			if "OK" in resp:
-				send_gm('Thanks '+name+', your message of: "'+DATA+'" has been sent to the que')
+				send_gm('Thanks '+name+', your message of: "'+DATA+'" has been sent to the queue')
 			else:
 				logging.eror("Failed to send message")
 				logging.error(resp)
