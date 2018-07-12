@@ -118,9 +118,6 @@ def gm_message_rx(request):
 			logging.debug("Message from: "+name)
 		else:
 			return
-		if group_id.index(groupID)<2:
-			Sec_Start(ID,name,message,groupID)
-			return "done",200
 		if message[0]=="$":
 			logging.debug("got a $")
 			if "Chad" in name:
