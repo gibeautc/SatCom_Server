@@ -184,6 +184,12 @@ def mapRange(x,in_min,in_max,out_min,out_max):
 		return out_max
 	return int(val)
 
+def mapRangeF(x,in_min,in_max,out_min,out_max):
+	val= (float(x) - float(in_min)) * (float(out_max) - float(out_min)) / (float(in_max) - float(in_min)) + float(out_min)
+	if int(val)>out_max:
+		return out_max
+	return val
+
 def getFullData(lat,lon):
 	if TEST:
 		try:
@@ -239,18 +245,21 @@ def convertToBytes(data):
 		print("LOW:"+str(low))
 		sky=int(hour['sky'])
 		rain=float(hour['rain'])
+		print("Rain Raw: "+str(rain))
 		wind=int(float(hour['wind']))
 		
 		high=mapRange(high,-20,120,0,28)
 		low=mapRange(low,-20,120,0,28)
 		sky=mapRange(sky,0,100,0,25)
 		rain=mapRange(rain,0,2,0,20)
+		print("Rain Enum: "+str(rain))
 		wind=mapRange(wind,0,75,0,15)
 		
 		high=bitarray(format(high,'05b'))
 		low=bitarray(format(low,'05b'))
 		sky=bitarray(format(sky,'05b'))
 		rain=bitarray(format(rain,'05b'))
+		print("Rain bits: "+str(rain))
 		wind=bitarray(format(wind,'04b'))
 		print(len(high))
 		print(len(low))
@@ -284,10 +293,25 @@ def convertFromBytes(data):
 	#each Hour is 20 bits
 	for h in range(20):
 		hourbits=bitA[cnt:cnt+20]
+		cnt=cnt+20
 		#temp,sky,wind,precip type,precip (rain)
 		#type is one bit, wind is 4, all others are 5
 		print(hourbits)
-		cnt=cnt+20
+		temp=int(hourbits[:5].to01(),2)
+		sky=int(hourbits[5:10].to01(),2)
+		wind=int(hourbits[10:14].to01(),2)
+		rain=int(hourbits[-5:].to01(),2)
+		
+		temp=mapRange(temp,0,28,-20,120)
+		sky=mapRange(sky,0,25,0,100)
+		wind=mapRange(wind,0,15,0,75)
+		rain=mapRangeF(rain,0,20,0,2)
+		print("Hour: "+str(h))
+		print("Temp: "+str(temp))
+		print("Sky: "+str(sky))
+		print("Wind: "+str(wind))
+		print("Rain: "+str(rain))
+		print("")
 	#each day is 25 bits starting at 400
 	for d in range(5):
 		#high,low,sky,wind,precip type,precip (rain)
@@ -295,6 +319,24 @@ def convertFromBytes(data):
 		daybits=bitA[cnt:cnt+25]
 		print(daybits)
 		cnt=cnt+25
+		high=int(daybits[:5].to01(),2)
+		low=int(daybits[5:10].to01(),2)
+		sky=int(daybits[10:15].to01(),2)
+		wind=int(daybits[15:19].to01(),2)
+		rain=int(daybits[-5:].to01(),2)
+		
+		high=mapRange(high,0,28,-20,120)
+		low=mapRange(low,0,28,-20,120)
+		sky=mapRange(sky,0,25,0,100)
+		wind=mapRange(wind,0,15,0,75)
+		rain=mapRangeF(rain,0,20,0,2)
+		print("Day: "+str(d))
+		print("High: "+str(high))
+		print("Low: "+str(low))
+		print("Sky: "+str(sky))
+		print("Wind: "+str(wind))
+		print("Rain: "+str(rain))
+		print("")
 	#this brings us to bit 525
 	riverHbits=bitA[cnt:cnt+8*4]
 	cnt=cnt+(8*4)
