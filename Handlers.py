@@ -120,25 +120,22 @@ def gm_message_rx(request):
 			return
 		if message[0]=="$":
 			logging.debug("got a $")
-			if "Chad" in name:
-				logging.debug("and its from me")
-				#send message to sat
-				IMEI='300434063832680'
-				NAME="gibeautc@oregonstate.edu"
-				PASSWORD='myvice12'
-				DATA=message[1:]
-				params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
-				f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
-				print(f.read())
-				logging.debug(str(f.read()))
-				send_gm('Thanks Chad, your message of: "'+DATA+'" has been sent to the que')
+			
+			logging.debug("and its from me")
+			#send message to sat
+			#IMEI='300434063832680' #new
+			IMEI='300234064380130' #old
+			NAME="gibeautc@oregonstate.edu"
+			PASSWORD='myvice12'
+			DATA=message[1:]
+			params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
+			f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
+			resp=f.read()
+			if "OK" in resp:
+				send_gm('Thanks '+name+', your message of: "'+DATA+'" has been sent to the que')
 			else:
-				try:
-					name=name.split(" ")
-					name=name[0]
-				except:
-					name=name
-				send_gm("Sorry "+name+" , you are not authorized to send messages at this time.....please fuck off")
+				send_gm('Sorry '+name+', there seems to be a problem delivering your message')
+			
 	except:
 		logging.debug("Process GM message Failed")
 		logging.debug(request.json)
