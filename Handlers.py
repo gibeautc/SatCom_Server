@@ -123,7 +123,7 @@ def gm_message_rx(request):
 			if "Chad" in name:
 				logging.debug("and its from me")
 				#send message to sat
-				IMEI='300234064380130'
+				IMEI='300434063832680'
 				NAME="gibeautc@oregonstate.edu"
 				PASSWORD='myvice12'
 				DATA=message[1:]
