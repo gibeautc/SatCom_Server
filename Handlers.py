@@ -123,8 +123,8 @@ def gm_message_rx(request):
 			
 			logging.debug("and its from me")
 			#send message to sat
-			#IMEI='300434063832680' #new
-			IMEI='300234064380130' #old
+			IMEI='300434063832680' #new
+			#IMEI='300234064380130' #old
 			NAME="gibeautc@oregonstate.edu"
 			PASSWORD='myvice12'
 			DATA=message[1:]
@@ -134,6 +134,8 @@ def gm_message_rx(request):
 			if "OK" in resp:
 				send_gm('Thanks '+name+', your message of: "'+DATA+'" has been sent to the que')
 			else:
+				logging.eror("Failed to send message")
+				logging.error(resp)
 				send_gm('Sorry '+name+', there seems to be a problem delivering your message')
 			
 	except:
