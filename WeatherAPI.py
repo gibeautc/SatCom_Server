@@ -6,7 +6,8 @@ import os
 import logging as log
 import urllib2
 from bitarray import bitarray
-
+import binascii
+import struct
 TEST=True
 
 WUGBase='http://api.wunderground.com/api/35859b32434c5985/'
@@ -179,7 +180,15 @@ def get_alert(lat,lon):
 
 def mapRange(x,in_min,in_max,out_min,out_max):
 	val= (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+	if int(val)>out_max:
+		return out_max
 	return int(val)
+
+def mapRangeF(x,in_min,in_max,out_min,out_max):
+	val= (float(x) - float(in_min)) * (float(out_max) - float(out_min)) / (float(in_max) - float(in_min)) + float(out_min)
+	if int(val)>out_max:
+		return out_max
+	return val
 
 def getFullData(lat,lon):
 	if TEST:
@@ -211,41 +220,140 @@ def convertToBytes(data):
 		temp=int(float(hour['temp']))
 		sky=int(hour['sky'])
 		rain=float(hour['rain'])
-		snow=float(hour['snow'])
 		wind=int(float(hour['wind']))
-		temp=bitarray(mapRange(temp,-20,120,0,28))
-		sky=bitarray(mapRange(sky,0,100,0,25))
-		rain=bitarray(mapRange(rain,0,2,0,20))
-		snow=bitarray(mapRange(snow,0,2,0,25))
-		wind=bitarray(mapRange(wind,0,75,0,15))
-		temp=temp[:5]
-		sky=sky[:5]
-		rain=rain[:5]
-		snow=snow[:5]
-		wind=wind[:4]
-		print(temp)
-		print(sky)
-		print(rain)
-		returnData.append(temp)
-		returnData.append(sky)
-		returnData.append(wind)
-		if snow!=0:
-			returnData.append(True)
-			returnData.append(snow)
-		else:
-			returnData.append(False)
-			returnData.append(rain)
-		print(len(returnData))
-	return returnData
+		temp=mapRange(temp,-20,120,0,28)
+		sky=mapRange(sky,0,100,0,25)
+		rain=mapRange(rain,0,2,0,20)
+		wind=mapRange(wind,0,75,0,15)
+		temp=bitarray(format(temp,'05b'))
+		sky=bitarray(format(sky,'05b'))
+		rain=bitarray(format(rain,'05b'))
+		wind=bitarray(format(wind,'04b'))
+		returnData.extend(temp)
+		returnData.extend(sky)
+		returnData.extend(wind)
+		#at some point add in the snow, which would make this next line True, but trying to make it simple for now
+		returnData.append(False)
+		returnData.extend(rain)
+		print("Hour: "+str(h)+"\t\tCurrent Length of Data: "+str(len(returnData)))
+	for d in range(5):
+		#{'sky': 78, 'snow': 0.0, 'rain': 0.0, 'high': u'76.1', 'low': 200, 'day': u'14', 'wind': 3}
+		hour=data['weather']['D'+str(d)]
+		
+		high=int(float(hour['high']))
+		low=int(float(hour['low']))
+		print("LOW:"+str(low))
+		sky=int(hour['sky'])
+		rain=float(hour['rain'])
+		print("Rain Raw: "+str(rain))
+		wind=int(float(hour['wind']))
+		
+		high=mapRange(high,-20,120,0,28)
+		low=mapRange(low,-20,120,0,28)
+		sky=mapRange(sky,0,100,0,25)
+		rain=mapRange(rain,0,2,0,20)
+		print("Rain Enum: "+str(rain))
+		wind=mapRange(wind,0,75,0,15)
+		
+		high=bitarray(format(high,'05b'))
+		low=bitarray(format(low,'05b'))
+		sky=bitarray(format(sky,'05b'))
+		rain=bitarray(format(rain,'05b'))
+		print("Rain bits: "+str(rain))
+		wind=bitarray(format(wind,'04b'))
+		print(len(high))
+		print(len(low))
+		print(len(sky))
+		print(len(rain))
+		print(len(wind))
+		returnData.extend(high)
+		returnData.extend(low)
+		returnData.extend(sky)
+		returnData.extend(wind)
+		#at some point add in the snow, which would make this next line True, but trying to make it simple for now
+		returnData.append(False)
+		returnData.extend(rain)
+		print("Day: "+str(d)+"\t\tCurrent Length of Data: "+str(len(returnData)))
+	river=data['river']
+	riverH=''.join(bin(ord(c)).replace('0b', '').rjust(8, '0') for c in struct.pack('!f', river[0]))
+	riverF=''.join(bin(ord(c)).replace('0b', '').rjust(8, '0') for c in struct.pack('!f', river[1]))
+	print(riverH)
+	print(riverF)
+	returnData.extend(riverH)
+	returnData.extend(riverF)
+	return binascii.hexlify(returnData)
 def convertFromBytes(data):
-	pass
-	
-if __name__=="__main__":
-	lat=41.236453
-	lon=-95.978662
+	#write this here for testing, and then can move it over to the Client side
+	cnt=0
+	bitA=bitarray()
+	bitA.frombytes(data.decode('hex'))
+	bitA=bitA[:-3]  #take off 3 filler bits
+	#print(bitA)
+	#print(len(bitA))
+	#each Hour is 20 bits
+	for h in range(20):
+		hourbits=bitA[cnt:cnt+20]
+		cnt=cnt+20
+		#temp,sky,wind,precip type,precip (rain)
+		#type is one bit, wind is 4, all others are 5
+		print(hourbits)
+		temp=int(hourbits[:5].to01(),2)
+		sky=int(hourbits[5:10].to01(),2)
+		wind=int(hourbits[10:14].to01(),2)
+		rain=int(hourbits[-5:].to01(),2)
+		
+		temp=mapRange(temp,0,28,-20,120)
+		sky=mapRange(sky,0,25,0,100)
+		wind=mapRange(wind,0,15,0,75)
+		rain=mapRangeF(rain,0,20,0,2)
+		print("Hour: "+str(h))
+		print("Temp: "+str(temp))
+		print("Sky: "+str(sky))
+		print("Wind: "+str(wind))
+		print("Rain: "+str(rain))
+		print("")
+	#each day is 25 bits starting at 400
+	for d in range(5):
+		#high,low,sky,wind,precip type,precip (rain)
+		#type is one bit, wind is 4, all others are 5
+		daybits=bitA[cnt:cnt+25]
+		print(daybits)
+		cnt=cnt+25
+		high=int(daybits[:5].to01(),2)
+		low=int(daybits[5:10].to01(),2)
+		sky=int(daybits[10:15].to01(),2)
+		wind=int(daybits[15:19].to01(),2)
+		rain=int(daybits[-5:].to01(),2)
+		
+		high=mapRange(high,0,28,-20,120)
+		low=mapRange(low,0,28,-20,120)
+		sky=mapRange(sky,0,25,0,100)
+		wind=mapRange(wind,0,15,0,75)
+		rain=mapRangeF(rain,0,20,0,2)
+		print("Day: "+str(d))
+		print("High: "+str(high))
+		print("Low: "+str(low))
+		print("Sky: "+str(sky))
+		print("Wind: "+str(wind))
+		print("Rain: "+str(rain))
+		print("")
+	#this brings us to bit 525
+	riverHbits=bitA[cnt:cnt+8*4]
+	cnt=cnt+(8*4)
+	riverFbits=bitA[cnt:]
+	print(riverHbits)
+	print(riverFbits)
+
+def getData(lat,lon):
 	d=getFullData(lat,lon)
 	print(d)
 	print(len(d['weather']))
 	b=convertToBytes(d)
 	print(b)
 	print(len(b))
+	return b
+if __name__=="__main__":
+	lat=41.236453
+	lon=-95.978662
+	#getData(lat,lon)
+	convertFromBytes('b9440b9040b9040b2440aa440aa440aa040a2040a2040a0440a0440a0840990409944099c409b0409c040a3c40a4040ad040af1a234f900027c98013e4c4097220020ba28f6230b00004')
