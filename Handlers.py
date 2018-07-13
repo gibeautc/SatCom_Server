@@ -43,6 +43,7 @@ def sat_message_rx(request):
 		logging.info("Accuracy: "+str(ir_cep))
 		logging.info("Time: "+str(transmit_time))
 		logging.info("Message: "+str(data))
+                logging.info("Message Length: "+str(len(data)))
 		q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
 		try:
 			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
@@ -50,7 +51,7 @@ def sat_message_rx(request):
 			#log.debug("entry added for location: "+location)
 		except:
 			dbb.rollback()
-			logging.error("Error Adding DB entry(Forecast)")
+			logging.error("Error Adding DB entry(Message from box)")
 			logging.error(sys.exc_info())
 		#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
 		#This is 10 bytes, if the messge is longer then everthing else is actual text
