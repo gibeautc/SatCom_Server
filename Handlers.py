@@ -1,107 +1,27 @@
 #!/usr/bin/env python
 
 import logging
-import urllib
 import MySQLdb
-import sys
-import struct
-dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
-cur=dbb.cursor()
+import time
 
-def send_gm(message):
-	#bot='0111eaa305c26110dd21040a0a'	#crew
-	bot='b3e83fd81cfbe44a7ea8a22030'	#SatCom
-	params=urllib.urlencode({'bot_id':bot,'text':message})
-	f=urllib.urlopen("https://api.groupme.com/v3/bots/post",params)
-	try:
-		log.debug(f.read())
-	except:
-		print(f.read())
+locdb=MySQLdb.connect('localhost','root','aq12ws','local')
+locCurs=locdb.cursor()
 
-def sat_message_rx(request):
-	#Message coming from sat. Could be an hourly update with or without attached message, or it could be priority message (location should be attached to that as well)
-	#assuming message has its own lat/lon   we will use that for groupme. If it doesnt, use the iridium cords but somehow show that its not accurate. 
-	#for now will be pushing all messages to groupme, but keep in mind we will want to add support to be able to send messages to another group (emergancy) or even to other platforms
-	#facebook, twitter, whatever
+wxdb=MySQLdb.connect('localhost','root','aq12ws','weather')
+wxCurs=wxdb.cursor()
 
-	#For hourly/normal updates, once we have the location, we need to pull weather(hourly/daily) for this location, package up the data and send it back out to the sat
-	#have hook on SatCom Groupme, any message that starts with a a $ and then is less then 50 char will be sent. For now no restriction, but may want to think about that in the future. 
-	try:
-		data=request.form['data']
-		logging.info("Type of Data")
-		logging.info(type(data))
-		msg=data.decode('hex')
-		logging.info(type(msg))
-		momsn=request.form['momsn']
-		transmit_time=request.form['transmit_time']
-		iridium_lat=request.form['iridium_latitude']
-		iridium_lon=request.form['iridium_longitude']
-		ir_cep=request.form['iridium_cep']
-		logging.info("Message Number: "+str(momsn))
-		logging.info("Lat: "+str(iridium_lat))
-		logging.info("Lon: "+str(iridium_lon))
-		logging.info("Accuracy: "+str(ir_cep))
-		logging.info("Time: "+str(transmit_time))
-		logging.info("Message: "+str(data))
-                logging.info("Message Length: "+str(len(data)))
-		q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
-		try:
-			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
-			dbb.commit()
-			#log.debug("entry added for location: "+location)
-		except:
-			dbb.rollback()
-			logging.error("Error Adding DB entry(Message from box)")
-			logging.error(sys.exc_info())
-		#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
-		#This is 10 bytes, if the messge is longer then everthing else is actual text
-		if len(msg)<20:
-			#This could be because a blank message is send when checking rx, or a bad message
-			logging.warning("Data is too short")
-			return	
-		else:
-			procPayLoad(msg)
-	except:
-		logging.error("POST Failed")
-		logging.error(sys.exc_info())
-def procPayLoad(msg):
-	msg=msg.decode("hex")
-	print(msg)
-	import binascii
-	latData=msg[:4]
-	lonData=msg[4:8]
-	print(len(latData))
-	print(binascii.hexlify(latData))
-	print(len(lonData))
-	print(binascii.hexlify(lonData))
-	gpsLat=struct.unpack('f', latData)[0]
-	gpsLon=struct.unpack('f', lonData)[0]
-	warn=msg[8]
-	crit=msg[9]
-	
-	print(type(crit))
-	print("warn/crit")
-	print(warn)
-	print(crit)
-	tmsg="Message Received from SatCom: "
-	if len(msg)>10:
-		tmsg=tmsg+str(msg[10:])
-	send_gm(tmsg)		
-	try:
-		send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
-	except:
-		pass
-	try:
-		send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
-		mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
-		print(mapUrl)
-		send_gm(mapUrl)
-	except:
-		pass
-	if warn>0:
-		send_gm("Warning Code: "+str(warn))
-	if crit>0:
-		send_gm("Critial Code: "+str(crit))
+def findLocation():
+	#need a valid loction ID from database, we have lat and long
+	#in request data. Pull all locations, check if there is one that has
+	#an acceptable distance   say 5 Miles?
+	#if we have one return the ID, if not we need to add it in (with rec of 1)
+	# and return new ID
+
+def loc_db_connect():
+	global locdb,locCurs
+	locdb=MySQLdb.connect('localhost','root','aq12ws','local')
+	locCurs=locdb.cursor()
+
 
 def gm_message_rx(request):
 	try:
@@ -117,33 +37,100 @@ def gm_message_rx(request):
 		if sender!='bot':
 			logging.debug("Message is: "+message)
 			logging.debug("Message from: "+name)
+			logging.debug("In Group: "+groupID)
 		else:
 			return
+		if group_id.index(groupID)<2:
+			Sec_Start(ID,name,message,groupID)
+			return "done",200
 		if message[0]=="$":
 			logging.debug("got a $")
-			
-			logging.debug("and its from me")
-			#send message to sat
-			IMEI='300434063832680' #new
-			#IMEI='300234064380130' #old
-			NAME="gibeautc@oregonstate.edu"
-			PASSWORD='myvice12'
-			DATA=message[1:]
-			params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
-			f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
-			resp=f.read()
-			if "OK" in resp:
-				send_gm('Thanks '+name+', your message of: "'+DATA+'" has been sent to the queue')
+			if "Chad" in name:
+				logging.debug("and its from me")
+				#send message to sat
+				IMEI='300234064380130'
+				NAME="gibeautc@oregonstate.edu"
+				PASSWORD='aq12ws'
+				DATA=message[1:]
+				params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
+				f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
+				print(f.read())
+				logging.debug(str(f.read()))
+				#send_gm('Thanks Chad, your message of: "'+DATA+'" has been sent to the que')
 			else:
-				logging.eror("Failed to send message")
-				logging.error(resp)
-				send_gm('Sorry '+name+', there seems to be a problem delivering your message')
-			
+				#not authorized
+				try:
+					name=name.split(" ")
+					name=name[0]
+				except:
+					name=name
+				#send_gm("Sorry "+name+" , you are not authorized to send messages at this time.....please fuck off")
+		#print("GM Message from: "+str(name)+" ----:"+str(message))
 	except:
 		logging.debug("Process GM message Failed")
 		logging.debug(request.json)
 		logging.error(sys.exc_info())
+
+
+
+def processApp(request):
+    if request.method=="POST":
+        logging.debug("Got a POST request from App")
+        logging.debug(request.data)
+    if request.method=="GET":
+        logging.debug("Got a GET request from app")
+        logging.debug(request.data)
+
+def processWxReq(request):
+	if request.method=="POST":
+		logging.debug(request.data)
+		#data={
+	if request.method=="GET":
+		logging.debug(request.data)
+		#this should contain location information
+	time.sleep(10)
+	return "{hi:1}",200
 		
-if __name__=="__main__":
-	print("Testing Handlers")
-	procPayLoad("cf5b3242db7af6c20201")
+
+def processLoc(request):
+        jsonData={}
+	if request.method=="POST":
+		logging.debug("Got a POST request from Local Client: "+str(request.remote_addr))
+		#add an ID field and check that against database, use it for how to proceed
+		try:
+			logging.debug(request.data)
+			logging.debug(type(request.data))
+			jsonData=json.loads(request.data.replace("'",'"'))
+                        #jsonData=request.data
+			logging.debug(jsonData)
+		
+		except:
+			logging.error("Getting JSON from local connection failed")
+			logging.error(sys.exc_info())
+			return
+                try:
+                    ID=jsonData['ID']
+
+                except:
+                    logging.warning("No Id field from Client")
+                    return
+		stat=jsonData['STATUS']
+		if stat=="OFF":
+			stat="0"
+		if stat=="ON":
+			stat="1"
+		db_out=[str(jsonData['tempOutSide']),str(jsonData['tempInSide']),str(jsonData['hsTemp']),str(jsonData['SET']),stat]
+		q='insert into officeTemp(rec_date,outside,inside,hs,setpoint,status) values(Now(),%s,%s,%s,%s,%s)'
+		try:
+			logging.debug("Adding Office Temp Entry")
+			locCurs.execute(q,db_out)
+			locdb.commit()
+		except:
+			locdb.rollback()
+			logging.error("Error Adding DB entry")
+			logging.error(sys.exc_info())	
+		
+		
+	if request.method=="GET":
+		logging.debug("Got a GET request from Local Client")
+		logging.debug(request.data)
