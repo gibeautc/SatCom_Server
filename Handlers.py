@@ -68,31 +68,37 @@ def sat_message_rx(request,FakeMsg=None):
 	
 	
 def procPayLoad(msg):
-	latData=msg[:4]
-	lonData=msg[4:8]
-	gpsLat=struct.unpack('f', latData)[0]
-	gpsLon=struct.unpack('f', lonData)[0]
-	warn=msg[8]
-	crit=msg[9]
-	tmsg="Message Received from SatCom: "
-	if len(msg)>10:
-		tmsg=tmsg+str(msg[10:])
-	send_gm(tmsg)		
 	try:
-		send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
-		mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
-		print(mapUrl)
-		send_gm(mapUrl)
+		latData=msg[:4]
+		lonData=msg[4:8]
+		gpsLat=struct.unpack('f', latData)[0]
+		gpsLon=struct.unpack('f', lonData)[0]
+		warn=msg[8]
+		crit=msg[9]
+		tmsg="Message Received from SatCom: "
+		if len(msg)>10:
+			tmsg=tmsg+str(msg[10:])
+		send_gm(tmsg)		
+		try:
+			send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
+			mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
+			print(mapUrl)
+			send_gm(mapUrl)
+		except:
+			pass
+		if warn>0:
+			logging.debug("Warning Code:")
+			logging.debug(str(warn))
+			send_gm("Warning Code: "+str(warn))
+		if crit>0:
+			logging.debug("Critical Code:")
+			logging.debug(str(crit))
+			send_gm("Critial Code: "+str(crit))
 	except:
-		pass
-	if warn>0:
-		logging.debug("Warning Code:")
-		logging.debug(str(warn))
-		send_gm("Warning Code: "+str(warn))
-	if crit>0:
-		logging.debug("Critical Code:")
-		logging.debug(str(crit))
-		send_gm("Critial Code: "+str(crit))
+		logging.error("Failed to process message")
+		logging.error(sys.exc_info())
+		gm_St="Server Failed to Process Message:"+str(msg)
+		send_gm(gm_St)
 
 def gm_message_rx(request):
 	try:
