@@ -5,6 +5,7 @@ import urllib
 import MySQLdb
 import sys
 import struct
+import binascii
 dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
 cur=dbb.cursor()
 
@@ -18,7 +19,7 @@ def send_gm(message):
 	except:
 		print(f.read())
 
-def sat_message_rx(request):
+def sat_message_rx(request,FakeMsg=None):
 	#Message coming from sat. Could be an hourly update with or without attached message, or it could be priority message (location should be attached to that as well)
 	#assuming message has its own lat/lon   we will use that for groupme. If it doesnt, use the iridium cords but somehow show that its not accurate. 
 	#for now will be pushing all messages to groupme, but keep in mind we will want to add support to be able to send messages to another group (emergancy) or even to other platforms
@@ -43,54 +44,40 @@ def sat_message_rx(request):
 		logging.info("Accuracy: "+str(ir_cep))
 		logging.info("Time: "+str(transmit_time))
 		logging.info("Message: "+str(data))
-                logging.info("Message Length: "+str(len(data)))
-		q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
-		try:
-			cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
-			dbb.commit()
-			#log.debug("entry added for location: "+location)
-		except:
-			dbb.rollback()
-			logging.error("Error Adding DB entry(Message from box)")
-			logging.error(sys.exc_info())
-		#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
-		#This is 10 bytes, if the messge is longer then everthing else is actual text
-		if len(msg)<20:
-			#This could be because a blank message is send when checking rx, or a bad message
-			logging.warning("Data is too short")
-			return	
-		else:
-			procPayLoad(msg)
+		logging.info("Message Length: "+str(len(data)))
 	except:
-		logging.error("POST Failed")
+		logging.error("Sat Header Failed")
 		logging.error(sys.exc_info())
+	q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
+	try:
+		cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
+		dbb.commit()
+		#log.debug("entry added for location: "+location)
+	except:
+		dbb.rollback()
+		logging.error("Error Adding DB entry(Message from box)")
+		logging.error(sys.exc_info())
+	#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
+	#This is 10 bytes, if the messge is longer then everthing else is actual text
+	if len(msg)<20:
+		#This could be because a blank message is send when checking rx, or a bad message
+		logging.warning("Data is too short")
+		return	
+	else:
+		procPayLoad(msg)
+	
+	
 def procPayLoad(msg):
-	msg=msg.decode("hex")
-	print(msg)
-	import binascii
 	latData=msg[:4]
 	lonData=msg[4:8]
-	print(len(latData))
-	print(binascii.hexlify(latData))
-	print(len(lonData))
-	print(binascii.hexlify(lonData))
 	gpsLat=struct.unpack('f', latData)[0]
 	gpsLon=struct.unpack('f', lonData)[0]
 	warn=msg[8]
 	crit=msg[9]
-	
-	print(type(crit))
-	print("warn/crit")
-	print(warn)
-	print(crit)
 	tmsg="Message Received from SatCom: "
 	if len(msg)>10:
 		tmsg=tmsg+str(msg[10:])
 	send_gm(tmsg)		
-	try:
-		send_gm("Estimated Location:  Lat: "+str(iridium_lat)+"  Lon: "+str(iridium_lon))
-	except:
-		pass
 	try:
 		send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
 		mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
@@ -99,8 +86,12 @@ def procPayLoad(msg):
 	except:
 		pass
 	if warn>0:
+		logging.debug("Warning Code:")
+		logging.debug(str(warn))
 		send_gm("Warning Code: "+str(warn))
 	if crit>0:
+		logging.debug("Critical Code:")
+		logging.debug(str(crit))
 		send_gm("Critial Code: "+str(crit))
 
 def gm_message_rx(request):
@@ -146,4 +137,4 @@ def gm_message_rx(request):
 		
 if __name__=="__main__":
 	print("Testing Handlers")
-procPayLoad("cf5b3242db7af6c20201")
+	procPayLoad("a47632428225f6c2800068656c6c6f2077652061726520676f6f64")
