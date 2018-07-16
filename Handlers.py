@@ -6,6 +6,7 @@ import MySQLdb
 import sys
 import struct
 import binascii
+from WeatherAPI import *
 dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
 cur=dbb.cursor()
 
@@ -24,7 +25,6 @@ def sat_message_rx(request,FakeMsg=None):
 	#assuming message has its own lat/lon   we will use that for groupme. If it doesnt, use the iridium cords but somehow show that its not accurate. 
 	#for now will be pushing all messages to groupme, but keep in mind we will want to add support to be able to send messages to another group (emergancy) or even to other platforms
 	#facebook, twitter, whatever
-
 	#For hourly/normal updates, once we have the location, we need to pull weather(hourly/daily) for this location, package up the data and send it back out to the sat
 	#have hook on SatCom Groupme, any message that starts with a a $ and then is less then 50 char will be sent. For now no restriction, but may want to think about that in the future. 
 	try:
@@ -68,24 +68,28 @@ def sat_message_rx(request,FakeMsg=None):
 	
 	
 def procPayLoad(msg):
+	msg=msg.decode('hex')
 	try:
 		latData=msg[:4]
 		lonData=msg[4:8]
 		gpsLat=struct.unpack('f', latData)[0]
 		gpsLon=struct.unpack('f', lonData)[0]
-		warn=msg[8]
-		crit=msg[9]
 		tmsg="Message Received from SatCom: "
 		if len(msg)>10:
 			tmsg=tmsg+str(msg[10:])
 		send_gm(tmsg)		
-		try:
+		if abs(gpsLat)>180 or abs(gpsLon)>180:
+			send_gm("Bad GPS Location: "+str(gpsLat)+"  Lon: "+str(gpsLon))
+		else:
 			send_gm("Actual Location:  Lat: "+str(gpsLat)+"  Lon: "+str(gpsLon))
-			mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
-			print(mapUrl)
-			send_gm(mapUrl)
-		except:
-			pass
+			try:	
+				mapUrl="https://www.google.com/maps/place/"+str(gpsLat)+","+str(gpsLon)
+				send_gm(mapUrl)
+			except:
+				pass
+			sat_tx(getData(gpsLat,gpsLon))
+		warn=msg[8]
+		crit=msg[9]
 		if warn>0:
 			logging.debug("Warning Code:")
 			logging.debug(str(warn))
@@ -99,6 +103,21 @@ def procPayLoad(msg):
 		logging.error(sys.exc_info())
 		gm_St="Server Failed to Process Message:"+str(msg)
 		send_gm(gm_St)
+
+def sat_tx(msg):
+	try:
+		f=open('satPW','r')
+	except:
+		logging.error("Failed to open Sat Password File")
+		return ""	
+	fl=f.read().split("\n")
+	NAME=fl[0]
+	PASSWORD=fl[1]
+	IMEI=fl[2]
+	params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':msg})
+	f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
+	resp=f.read()
+	return resp
 
 def gm_message_rx(request):
 	try:
@@ -118,23 +137,14 @@ def gm_message_rx(request):
 			return
 		if message[0]=="$":
 			logging.debug("got a $")
-			
 			logging.debug("and its from me")
-			#send message to sat
-			IMEI='300434063832680' #new
-			#IMEI='300234064380130' #old
-			NAME="gibeautc@oregonstate.edu"
-			PASSWORD='myvice12'
-			DATA=message[1:]
-			params=urllib.urlencode({'imei':IMEI,'username':NAME,'password':PASSWORD,'data':DATA.encode("hex")})
-			f=urllib.urlopen("https://core.rock7.com/rockblock/MT",params)
-			resp=f.read()
+			resp=sat_tx(msg[1:].encode('hex'))
 			if "OK" in resp:
 				send_gm('Thanks '+name+', your message of: "'+DATA+'" has been sent to the queue')
 			else:
 				logging.eror("Failed to send message")
 				logging.error(resp)
-				send_gm('Sorry '+name+', there seems to be a problem delivering your message')
+				send_gm('Sorry '+name+', there seems to be a problem delivering your message:'+str(resp))
 			
 	except:
 		logging.debug("Process GM message Failed")

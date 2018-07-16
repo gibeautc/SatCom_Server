@@ -116,7 +116,13 @@ def get_forecast(lat,lon):
 			lastDay=e['FCTTIME']['mday']
 			day=lastDay
 		if lastDay!=day:
-			log.debug("New Day")
+			lastDay=day
+			print("New Day")
+			print("HIGH:"+str(high))
+			print("LOW:"+str(low))
+			print("Wind"+str(wind))
+			print("Rain"+str(rain))
+			print("Sky"+str(sky))
 			if mode=='day':
 				entDict={}
 				entDict['day']=e['FCTTIME']['mday']
@@ -135,11 +141,13 @@ def get_forecast(lat,lon):
 			rain=0
 			snow=0
 			sky=0
-			
-		if e['temp']['english']>high:
-			high=e['temp']['english']
-		if e['temp']['english']<low:
-			low=e['temp']['english']
+		t=float(e['temp']['english'])
+		if t>high:
+			high=t
+			print("new high!:"+str(high))
+		if t<low:
+			low=t
+			print("new low!:"+str(low))
 		wind=wind+int(e['wspd']['english'])
 		rain=rain+float(e['qpf']['english'])
 		snow=snow+float(e['snow']['english'])
@@ -148,7 +156,7 @@ def get_forecast(lat,lon):
 		if mode=="hour":
 			entDict={}
 			entDict['time']=e['FCTTIME']['epoch']
-			entDict['temp']=e['temp']['english']
+			entDict['temp']=t
 			entDict['sky']=e['sky']
 			entDict['wind']=e['wspd']['english']
 			entDict['rain']=e['qpf']['english']
@@ -243,6 +251,7 @@ def convertToBytes(data):
 		high=int(float(hour['high']))
 		low=int(float(hour['low']))
 		print("LOW:"+str(low))
+		print("HIGH:"+str(high))
 		sky=int(hour['sky'])
 		rain=float(hour['rain'])
 		print("Rain Raw: "+str(rain))
@@ -353,7 +362,8 @@ def getData(lat,lon):
 	print(len(b))
 	return b
 if __name__=="__main__":
-	lat=41.236453
-	lon=-95.978662
-	#getData(lat,lon)
-	convertFromBytes('b9440b9040b9040b2440aa440aa440aa040a2040a2040a0440a0440a0840990409944099c409b0409c040a3c40a4040ad040af1a234f900027c98013e4c4097220020ba28f6230b00004')
+	lat=44.6158599
+	lon=-123.073257
+	g=getData(lat,lon)
+	#convertFromBytes('a9400a9840a1840a0c40a080098c0098c0098c009900091c0091c009300193000938008b80093c0094c0094c009cc409cc40a45c00ca4d102527001293800949e0020b5eb85230114002')
+	convertFromBytes(g)
