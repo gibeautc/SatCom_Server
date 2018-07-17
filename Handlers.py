@@ -50,7 +50,7 @@ def sat_message_rx(request,FakeMsg=None):
 		logging.error(sys.exc_info())
 	q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
 	try:
-		cur.execute(q,[str(momsn),str(msg),str(iridium_lat),str(iridium_lon)])
+		cur.execute(q,[str(momsn),str(data),str(iridium_lat),str(iridium_lon)])
 		dbb.commit()
 		#log.debug("entry added for location: "+location)
 	except:
