@@ -61,7 +61,7 @@ def sat_message_rx(request,FakeMsg=None):
 	#This is 10 bytes, if the messge is longer then everthing else is actual text
 	if len(msg)<20:
 		#This could be because a blank message is send when checking rx, or a bad message
-		logging.warning("Data is too short:"+len(msg)+" : "+msg)
+		logging.warning("Data is too short:"+str(len(msg))+" : "+msg)
 		return	
 	else:
 		procPayLoad(msg)
