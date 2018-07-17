@@ -59,7 +59,7 @@ def sat_message_rx(request,FakeMsg=None):
 		logging.error(sys.exc_info())
 	#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
 	#This is 10 bytes, if the messge is longer then everthing else is actual text
-	if len(msg)<20:
+	if len(msg)<10:
 		#This could be because a blank message is send when checking rx, or a bad message
 		logging.warning("Data is too short:"+str(len(msg))+" : "+msg)
 		return	
