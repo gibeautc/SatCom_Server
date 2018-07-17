@@ -69,7 +69,7 @@ def sat_message_rx(request,FakeMsg=None):
 	
 def procPayLoad(msg):
 	logging.info("Made it to procPayLload")
-	msg=msg.decode('hex')
+	#msg=msg.decode('hex')
 	try:
 		latData=msg[:4]
 		lonData=msg[4:8]
