@@ -7,8 +7,14 @@ import sys
 import struct
 import binascii
 from WeatherAPI import *
-dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
-cur=dbb.cursor()
+
+dbb=None
+cur=None
+
+def dbConnect():
+	global dbb,cur
+	dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
+	cur=dbb.cursor()
 
 def send_gm(message):
 	#bot='0111eaa305c26110dd21040a0a'	#crew
@@ -49,14 +55,18 @@ def sat_message_rx(request,FakeMsg=None):
 		logging.error("Sat Header Failed")
 		logging.error(sys.exc_info())
 	q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
-	try:
-		cur.execute(q,[str(momsn),str(data),str(iridium_lat),str(iridium_lon)])
-		dbb.commit()
-		#log.debug("entry added for location: "+location)
-	except:
-		dbb.rollback()
-		logging.error("Error Adding DB entry(Message from box)")
-		logging.error(sys.exc_info())
+	cnt=0
+	while cnt<5:	
+		try:
+			cur.execute(q,[str(momsn),str(data),str(iridium_lat),str(iridium_lon)])
+			dbb.commit()
+			break
+		except:
+			dbb.rollback()
+			cnt=cnt+1
+			logging.error("Error Adding DB entry(Message from box)")
+			logging.error(sys.exc_info())
+			dbConnect()
 	#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
 	#This is 10 bytes, if the messge is longer then everthing else is actual text
 	if len(msg)<10:
@@ -65,7 +75,6 @@ def sat_message_rx(request,FakeMsg=None):
 		return	
 	else:
 		procPayLoad(msg)
-	
 	
 def procPayLoad(msg):
 	logging.info("Made it to procPayLload")
