@@ -8,7 +8,7 @@ import urllib2
 from bitarray import bitarray
 import binascii
 import struct
-TEST=True
+from Const import *
 
 WUGBase='http://api.wunderground.com/api/35859b32434c5985/'
 
@@ -26,7 +26,6 @@ alert_strings=['Hurricane Local Statement','Tornado Warning',
 				'Volcanic Activity Statement','Hurricane Wind Warning',
 				'Record Set','Public Reports',
 				'Public Information Statement']
-
 
 def _webResponse(url):
 	try:
@@ -186,18 +185,6 @@ def get_alert(lat,lon):
 	alerts=data['alerts']
 	return alerts
 
-def mapRange(x,in_min,in_max,out_min,out_max):
-	val= (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-	if int(val)>out_max:
-		return out_max
-	return int(val)
-
-def mapRangeF(x,in_min,in_max,out_min,out_max):
-	val= (float(x) - float(in_min)) * (float(out_max) - float(out_min)) / (float(in_max) - float(in_min)) + float(out_min)
-	if int(val)>out_max:
-		return out_max
-	return val
-
 def getFullData(lat,lon):
 	finalData=json.loads("{}")
 	finalData['alerts']=get_alert(lat,lon)
@@ -210,6 +197,10 @@ def convertToBytes(data):
 	#each day is 25 bits, and there is 5 of them, so 125 bits
 	#total for weather is 525 bits = 66 Bytes
 	returnData=bitarray()
+	for x in range (8*3):
+		returnData.append(0)
+	log.debug("Header Length")
+	log.debug(len(returnData))
 	for h in range(20):
 		hour=data['weather']['H'+str(h)]
 		temp=int(float(hour['temp']))
@@ -278,67 +269,6 @@ def convertToBytes(data):
 	returnData.extend(riverH)
 	returnData.extend(riverF)
 	return binascii.hexlify(returnData)
-def convertFromBytes(data):
-	#write this here for testing, and then can move it over to the Client side
-	cnt=0
-	bitA=bitarray()
-	bitA.frombytes(data.decode('hex'))
-	bitA=bitA[:-3]  #take off 3 filler bits
-	#print(bitA)
-	#print(len(bitA))
-	#each Hour is 20 bits
-	for h in range(20):
-		hourbits=bitA[cnt:cnt+20]
-		cnt=cnt+20
-		#temp,sky,wind,precip type,precip (rain)
-		#type is one bit, wind is 4, all others are 5
-		print(hourbits)
-		temp=int(hourbits[:5].to01(),2)
-		sky=int(hourbits[5:10].to01(),2)
-		wind=int(hourbits[10:14].to01(),2)
-		rain=int(hourbits[-5:].to01(),2)
-		
-		temp=mapRange(temp,0,28,-20,120)
-		sky=mapRange(sky,0,25,0,100)
-		wind=mapRange(wind,0,15,0,75)
-		rain=mapRangeF(rain,0,20,0,2)
-		print("Hour: "+str(h))
-		print("Temp: "+str(temp))
-		print("Sky: "+str(sky))
-		print("Wind: "+str(wind))
-		print("Rain: "+str(rain))
-		print("")
-	#each day is 25 bits starting at 400
-	for d in range(5):
-		#high,low,sky,wind,precip type,precip (rain)
-		#type is one bit, wind is 4, all others are 5
-		daybits=bitA[cnt:cnt+25]
-		print(daybits)
-		cnt=cnt+25
-		high=int(daybits[:5].to01(),2)
-		low=int(daybits[5:10].to01(),2)
-		sky=int(daybits[10:15].to01(),2)
-		wind=int(daybits[15:19].to01(),2)
-		rain=int(daybits[-5:].to01(),2)
-		
-		high=mapRange(high,0,28,-20,120)
-		low=mapRange(low,0,28,-20,120)
-		sky=mapRange(sky,0,25,0,100)
-		wind=mapRange(wind,0,15,0,75)
-		rain=mapRangeF(rain,0,20,0,2)
-		print("Day: "+str(d))
-		print("High: "+str(high))
-		print("Low: "+str(low))
-		print("Sky: "+str(sky))
-		print("Wind: "+str(wind))
-		print("Rain: "+str(rain))
-		print("")
-	#this brings us to bit 525
-	riverHbits=bitA[cnt:cnt+8*4]
-	cnt=cnt+(8*4)
-	riverFbits=bitA[cnt:]
-	print(riverHbits)
-	print(riverFbits)
 
 def getData(lat,lon):
 	d=getFullData(lat,lon)
@@ -349,8 +279,10 @@ def getData(lat,lon):
 	print(len(b))
 	return b
 if __name__=="__main__":
+	from fakelog import fakeLog
+	log=fakeLog()
 	lat=44.6158599
 	lon=-123.073257
 	g=getData(lat,lon)
-	#convertFromBytes('a9400a9840a1840a0c40a080098c0098c0098c009900091c0091c009300193000938008b80093c0094c0094c009cc409cc40a45c00ca4d102527001293800949e0020b5eb85230114002')
-	convertFromBytes(g)
+	#convertWeatherData('a9400a9840a1840a0c40a080098c0098c0098c009900091c0091c009300193000938008b80093c0094c0094c009cc409cc40a45c00ca4d102527001293800949e0020b5eb85230114002')
+	convertWeatherData(g,True)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import logging
+import logging as log
 import urllib
 import MySQLdb
 import sys
@@ -16,6 +16,7 @@ def dbConnect():
 	dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
 	cur=dbb.cursor()
 dbConnect()
+
 def send_gm(message):
 	#bot='0111eaa305c26110dd21040a0a'	#crew
 	bot='b3e83fd81cfbe44a7ea8a22030'	#SatCom
@@ -35,25 +36,25 @@ def sat_message_rx(request,FakeMsg=None):
 	#have hook on SatCom Groupme, any message that starts with a a $ and then is less then 50 char will be sent. For now no restriction, but may want to think about that in the future. 
 	try:
 		data=request.form['data']
-		logging.info("Type of Data")
-		logging.info(type(data))
+		log.info("Type of Data")
+		log.info(type(data))
 		msg=data.decode('hex')
-		logging.info(type(msg))
+		log.info(type(msg))
 		momsn=request.form['momsn']
 		transmit_time=request.form['transmit_time']
 		iridium_lat=request.form['iridium_latitude']
 		iridium_lon=request.form['iridium_longitude']
 		ir_cep=request.form['iridium_cep']
-		logging.info("Message Number: "+str(momsn))
-		logging.info("Lat: "+str(iridium_lat))
-		logging.info("Lon: "+str(iridium_lon))
-		logging.info("Accuracy: "+str(ir_cep))
-		logging.info("Time: "+str(transmit_time))
-		logging.info("Message: "+str(data))
-		logging.info("Message Length: "+str(len(data)))
+		log.info("Message Number: "+str(momsn))
+		log.info("Lat: "+str(iridium_lat))
+		log.info("Lon: "+str(iridium_lon))
+		log.info("Accuracy: "+str(ir_cep))
+		log.info("Time: "+str(transmit_time))
+		log.info("Message: "+str(data))
+		log.info("Message Length: "+str(len(data)))
 	except:
-		logging.error("Sat Header Failed")
-		logging.error(sys.exc_info())
+		log.error("Sat Header Failed")
+		log.error(sys.exc_info())
 	q="insert into message(id,msg,irLat,irLon,ts,status,troubled) values(%s,%s,%s,%s,now(),0,0)"
 	cnt=0
 	while cnt<5:	
@@ -62,8 +63,8 @@ def sat_message_rx(request,FakeMsg=None):
 			dbb.commit()
 			break
 		except:
-			logging.error("Error Adding DB entry(Message from box)")
-			logging.error(sys.exc_info())
+			log.error("Error Adding DB entry(Message from box)")
+			log.error(sys.exc_info())
 			cnt=cnt+1
 			try:
 				dbb.rollback()
@@ -75,13 +76,13 @@ def sat_message_rx(request,FakeMsg=None):
 	#This is 10 bytes, if the messge is longer then everthing else is actual text
 	if len(msg)<10:
 		#This could be because a blank message is send when checking rx, or a bad message
-		logging.warning("Data is too short:"+str(len(msg))+" : "+msg)
+		log.warning("Data is too short:"+str(len(msg))+" : "+msg)
 		return	
 	else:
 		procPayLoad(msg)
 	
 def procPayLoad(msg):
-	logging.info("Made it to procPayLload")
+	log.info("Made it to procPayLload")
 	#msg=msg.decode('hex')
 	try:
 		latData=msg[:4]
@@ -105,16 +106,16 @@ def procPayLoad(msg):
 		warn=msg[8]
 		crit=msg[9]
 		if warn>0:
-			logging.debug("Warning Code:")
-			logging.debug(str(warn))
+			log.debug("Warning Code:")
+			log.debug(str(warn))
 			send_gm("Warning Code: "+str(warn))
 		if crit>0:
-			logging.debug("Critical Code:")
-			logging.debug(str(crit))
+			log.debug("Critical Code:")
+			log.debug(str(crit))
 			send_gm("Critial Code: "+str(crit))
 	except:
-		logging.error("Failed to process message")
-		logging.error(sys.exc_info())
+		log.error("Failed to process message")
+		log.error(sys.exc_info())
 		gm_St="Server Failed to Process Message:"+str(msg)
 		send_gm(gm_St)
 
@@ -122,7 +123,7 @@ def sat_tx(msg):
 	try:
 		f=open('satPW','r')
 	except:
-		logging.error("Failed to open Sat Password File")
+		log.error("Failed to open Sat Password File")
 		return ""	
 	fl=f.read().split("\n")
 	NAME=fl[0]
@@ -136,7 +137,7 @@ def sat_tx(msg):
 def gm_message_rx(request):
 	try:
 		data=request.json
-		logging.debug(data)
+		log.debug(data)
 		name=data['name']
 		ID=data['user_id']
 		message=data['text']
@@ -145,8 +146,8 @@ def gm_message_rx(request):
 		name=str(name)
 		sender=data['sender_type']
 		if sender!='bot':
-			logging.debug("Message is: "+message)
-			logging.debug("Message from: "+name)
+			log.debug("Message is: "+message)
+			log.debug("Message from: "+name)
 		else:
 			return
 		if message[0]=="$":
@@ -161,9 +162,9 @@ def gm_message_rx(request):
 				send_gm('Sorry '+name+', there seems to be a problem delivering your message:'+str(resp))
 			
 	except:
-		logging.debug("Process GM message Failed")
-		logging.debug(request.json)
-		logging.error(sys.exc_info())
+		log.debug("Process GM message Failed")
+		log.debug(request.json)
+		log.error(sys.exc_info())
 		
 if __name__=="__main__":
 	print("Testing Handlers")

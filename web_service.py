@@ -9,13 +9,13 @@ import sys
 import json
 import urllib
 import filelock
-import logging
+import logging as log
 import os
 from Handlers import *
 from WeatherAPI import *
 
 logfile="/root/logs/web_service.log"
-logging.basicConfig(filename=logfile,level=logging.DEBUG)
+log.basicConfig(filename=logfile,level=log.DEBUG)
 
 pidFile="/root/logs/"+os.path.basename(__file__)+".pid"
 f=open(pidFile, "w")
@@ -29,14 +29,14 @@ lock.acquire()
 app=Flask(__name__)
 @app.route('/gmbot',methods=['GET','POST'])
 def gm1():
-	logging.debug("GM Bot 1")
+	log.debug("GM Bot 1")
 	gm_message_rx(request)
 	return "done",200
 	
 @app.route('/sat',methods=['GET','POST'])
 def sat():
 	if request.method=='POST':
-		logging.debug("got a post at /sat")
+		log.debug("got a post at /sat")
 		sat_message_rx(request)
 		return "done",200
 
