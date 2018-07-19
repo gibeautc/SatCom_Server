@@ -15,7 +15,7 @@ def dbConnect():
 	global dbb,cur
 	dbb=MySQLdb.connect('localhost','root','aq12ws','satCom')
 	cur=dbb.cursor()
-
+dbConnect()
 def send_gm(message):
 	#bot='0111eaa305c26110dd21040a0a'	#crew
 	bot='b3e83fd81cfbe44a7ea8a22030'	#SatCom
@@ -62,10 +62,14 @@ def sat_message_rx(request,FakeMsg=None):
 			dbb.commit()
 			break
 		except:
-			dbb.rollback()
-			cnt=cnt+1
 			logging.error("Error Adding DB entry(Message from box)")
 			logging.error(sys.exc_info())
+			cnt=cnt+1
+			try:
+				dbb.rollback()
+			except:
+				dbConnect()
+				break
 			dbConnect()
 	#first 4 bytes is lat, next 4 is lon then a byte of warnings and a byte of criticles 
 	#This is 10 bytes, if the messge is longer then everthing else is actual text
