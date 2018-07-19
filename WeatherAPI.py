@@ -199,23 +199,10 @@ def mapRangeF(x,in_min,in_max,out_min,out_max):
 	return val
 
 def getFullData(lat,lon):
-	if TEST:
-		try:
-			f=open('testJson',"r")
-			f.close()
-			print("using temp file")
-			return json.loads(f.read())
-		except:
-			print("No temp file, going to internet")
 	finalData=json.loads("{}")
 	finalData['alerts']=get_alert(lat,lon)
 	finalData['weather']=get_forecast(lat,lon)
-	
 	finalData['river']=get_river_data(13317000)
-	if TEST:
-		f=open('testJson',"w+")
-		f.write(str(finalData))
-		f.close()
 	return finalData
 	
 def convertToBytes(data):
